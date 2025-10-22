@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Orchestrator - Monitoring Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+            --dark-bg: #0f172a;
+            --dark-surface: #1e293b;
+            --dark-elevated: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --light-bg: #f8fafc;
+            --light-surface: #ffffff;
+            --light-elevated: #f1f5f9;
+            --light-text-primary: #0f172a;
+            --light-text-secondary: #64748b;
+            --light-border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body.light-mode {
+            background: var(--light-bg);
+            color: var(--light-text-primary);
+        }
+
+        body.light-mode .header,
+        body.light-mode .sidebar,
+        body.light-mode .metric-card,
+        body.light-mode .platform-card,
+        body.light-mode .chart-container,
+        body.light-mode .alert-item,
+        body.light-mode .query-item {
+            background: var(--light-surface);
+            color: var(--light-text-primary);
+            border-color: var(--light-border);
+        }
+
+        body.light-mode .text-secondary {
+            color: var(--light-text-secondary);
+        }
+
+        .header {
+            background: var(--dark-surface);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: var(--dark-elevated);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .refresh-toggle {
+            background: var(--primary-color);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+        }
+
+        .refresh-toggle.active {
+            background: var(--success-color);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--dark-elevated);
+            border-radius: 0.5rem;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--danger-color);
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: var(--success-color);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .container {
+            display: flex;
+            min-height: calc(100vh - 73px);
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--dark-surface);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: var(--dark-elevated);
+        }
+
+        .nav-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .metric-card {
+            background: var(--dark-surface);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-change {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .metric-change.positive {
+            color: var(--success-color);
+        }
+
+        .metric-change.negative {
+            color: var(--danger-color);
+        }
+
+        .platforms-section {
+            margin-top: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .platform-card {
+            background: var(--dark-surface);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .platform-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--success-color);
+        }
+
+        .platform-card.degraded::before {
+            background: var(--warning-color);
+        }
+
+        .platform-card.unhealthy::before {
+            background: var(--danger-color);
+        }
+
+        .platform-card.disabled::before {
+            background: var(--text-secondary);
+        }
+
+        .platform-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .platform-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .platform-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .platform-status.healthy {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+        }
+
+        .platform-status.degraded {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning-color);
+        }
+
+        .platform-status.unhealthy {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+        }
+
+        .platform-status.disabled {
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--text-secondary);
+        }
+
+        .platform-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .platform-metric {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .platform-metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .platform-metric-value {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .charts-section {
+            margin-top: 2rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .chart-container {
+            background: var(--dark-surface);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-header {
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .chart-timeframe {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .chart-canvas {
+            height: 300px;
+        }
+
+        .active-queries-section {
+            margin-top: 2rem;
+        }
+
+        .queries-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .query-item {
+            background: var(--dark-surface);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .query-info {
+            flex: 1;
+        }
+
+        .query-id {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+
+        .query-text {
+            margin-top: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .query-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .query-progress {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .query-platforms {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 150px;
+            height: 6px;
+            background: var(--dark-elevated);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .alerts-section {
+            margin-top: 2rem;
+        }
+
+        .alerts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .alert-item {
+            background: var(--dark-surface);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            border-left: 4px solid;
+            display: flex;
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .alert-item.critical {
+            border-color: var(--danger-color);
+        }
+
+        .alert-item.warning {
+            border-color: var(--warning-color);
+        }
+
+        .alert-item.info {
+            border-color: var(--info-color);
+        }
+
+        .alert-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .alert-icon.critical {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+        }
+
+        .alert-icon.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning-color);
+        }
+
+        .alert-icon.info {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--info-color);
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-message {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .system-resources-section {
+            margin-top: 2rem;
+        }
+
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .resource-card {
+            background: var(--dark-surface);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .resource-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .resource-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .resource-percentage {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .resource-bar {
+            height: 8px;
+            background: var(--dark-elevated);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .resource-bar-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .resource-bar-fill.warning {
+            background: var(--warning-color);
+        }
+
+        .resource-bar-fill.critical {
+            background: var(--danger-color);
+        }
+
+        .resource-details {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .text-secondary {
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .header {
+                flex-wrap: wrap;
+            }
+
+            .header-actions {
+                width: 100%;
+                margin-top: 1rem;
+                justify-content: space-between;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>
+            <i class="fas fa-chart-line"></i>
+            AI Orchestrator Monitoring
+        </h1>
+        <div class="header-actions">
+            <div class="connection-status">
+                <div class="status-indicator" id="wsStatus"></div>
+                <span id="wsStatusText">Connecting...</span>
+            </div>
+            <button class="refresh-toggle" id="autoRefreshToggle">
+                <i class="fas fa-sync-alt"></i>
+                <span>Auto-refresh: OFF</span>
+            </button>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+                <span>Dark Mode</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="nav-item active" data-section="overview">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Overview</span>
+            </div>
+            <div class="nav-item" data-section="platforms">
+                <i class="fas fa-server"></i>
+                <span>Platforms</span>
+            </div>
+            <div class="nav-item" data-section="performance">
+                <i class="fas fa-chart-area"></i>
+                <span>Performance</span>
+            </div>
+            <div class="nav-item" data-section="queries">
+                <i class="fas fa-tasks"></i>
+                <span>Active Queries</span>
+            </div>
+            <div class="nav-item" data-section="alerts">
+                <i class="fas fa-bell"></i>
+                <span>Alerts</span>
+            </div>
+            <div class="nav-item" data-section="resources">
+                <i class="fas fa-microchip"></i>
+                <span>System Resources</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Overview Section -->
+            <div id="overview-section" class="dashboard-section">
+                <!-- Key Metrics -->
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-label">Total Queries</div>
+                            <div class="metric-icon" style="background: rgba(99, 102, 241, 0.2); color: var(--primary-color);">
+                                <i class="fas fa-paper-plane"></i>
+                            </div>
+                        </div>
+                        <div class="metric-value" id="totalQueries">0</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span id="queriesChange">0%</span>
+                            <span class="text-secondary">vs last hour</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-label">Avg Response Time</div>
+                            <div class="metric-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--success-color);">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="metric-value" id="avgResponseTime">0ms</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-down"></i>
+                            <span id="responseTimeChange">0%</span>
+                            <span class="text-secondary">faster</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-label">Error Rate</div>
+                            <div class="metric-icon" style="background: rgba(239, 68, 68, 0.2); color: var(--danger-color);">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                        <div class="metric-value" id="errorRate">0%</div>
+                        <div class="metric-change negative">
+                            <i class="fas fa-arrow-up"></i>
+                            <span id="errorRateChange">0%</span>
+                            <span class="text-secondary">vs target</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-label">Active Platforms</div>
+                            <div class="metric-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--warning-color);">
+                                <i class="fas fa-network-wired"></i>
+                            </div>
+                        </div>
+                        <div class="metric-value"><span id="activePlatforms">0</span>/<span id="totalPlatforms">0</span></div>
+                        <div class="metric-change">
+                            <span class="text-secondary" id="platformsStatus">All operational</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platforms Section -->
+            <div id="platforms-section" class="platforms-section section-hidden">
+                <h2 class="section-title">
+                    <i class="fas fa-server"></i>
+                    Platform Status
+                </h2>
+                <div class="platforms-grid" id="platformsGrid">
+                    <!-- Platform cards will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Performance Charts Section -->
+            <div id="performance-section" class="charts-section section-hidden">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-area"></i>
+                    Performance Metrics
+                </h2>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">Response Time (Last 24 Hours)</div>
+                            <div class="chart-timeframe">Real-time</div>
+                        </div>
+                        <canvas id="responseTimeChart" class="chart-canvas"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">Error Rate</div>
+                            <div class="chart-timeframe">Last 24 hours</div>
+                        </div>
+                        <canvas id="errorRateChart" class="chart-canvas"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">Query Volume</div>
+                            <div class="chart-timeframe">Last 24 hours</div>
+                        </div>
+                        <canvas id="queryVolumeChart" class="chart-canvas"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">Platform Distribution</div>
+                            <div class="chart-timeframe">Current session</div>
+                        </div>
+                        <canvas id="platformDistChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Queries Section -->
+            <div id="queries-section" class="active-queries-section section-hidden">
+                <h2 class="section-title">
+                    <i class="fas fa-tasks"></i>
+                    Active Queries
+                    <span class="text-secondary" style="font-size: 1rem; font-weight: 400;">(<span id="activeQueryCount">0</span> running)</span>
+                </h2>
+                <div class="queries-list" id="queriesList">
+                    <!-- Query items will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div id="alerts-section" class="alerts-section section-hidden">
+                <h2 class="section-title">
+                    <i class="fas fa-bell"></i>
+                    Recent Alerts
+                    <span class="text-secondary" style="font-size: 1rem; font-weight: 400;">(<span id="alertCount">0</span> active)</span>
+                </h2>
+                <div class="alerts-list" id="alertsList">
+                    <!-- Alert items will be inserted here -->
+                </div>
+            </div>
+
+            <!-- System Resources Section -->
+            <div id="resources-section" class="system-resources-section section-hidden">
+                <h2 class="section-title">
+                    <i class="fas fa-microchip"></i>
+                    System Resources
+                </h2>
+                <div class="resources-grid">
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <div class="resource-label">CPU Usage</div>
+                            <i class="fas fa-microchip"></i>
+                        </div>
+                        <div class="resource-percentage" id="cpuUsage">0%</div>
+                        <div class="resource-bar">
+                            <div class="resource-bar-fill" id="cpuBar" style="width: 0%;"></div>
+                        </div>
+                        <div class="resource-details" id="cpuDetails">Loading...</div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <div class="resource-label">Memory Usage</div>
+                            <i class="fas fa-memory"></i>
+                        </div>
+                        <div class="resource-percentage" id="memoryUsage">0%</div>
+                        <div class="resource-bar">
+                            <div class="resource-bar-fill" id="memoryBar" style="width: 0%;"></div>
+                        </div>
+                        <div class="resource-details" id="memoryDetails">Loading...</div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <div class="resource-label">Network I/O</div>
+                            <i class="fas fa-network-wired"></i>
+                        </div>
+                        <div class="resource-percentage" id="networkIO">0 KB/s</div>
+                        <div class="resource-bar">
+                            <div class="resource-bar-fill" id="networkBar" style="width: 0%;"></div>
+                        </div>
+                        <div class="resource-details" id="networkDetails">Loading...</div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <div class="resource-label">Disk Usage</div>
+                            <i class="fas fa-hdd"></i>
+                        </div>
+                        <div class="resource-percentage" id="diskUsage">0%</div>
+                        <div class="resource-bar">
+                            <div class="resource-bar-fill" id="diskBar" style="width: 0%;"></div>
+                        </div>
+                        <div class="resource-details" id="diskDetails">Loading...</div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <div class="resource-label">Uptime</div>
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="resource-percentage" id="uptime" style="font-size: 1.25rem;">0d 0h 0m</div>
+                        <div class="resource-details" id="uptimeDetails">Started: Loading...</div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <div class="resource-label">Requests/sec</div>
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <div class="resource-percentage" id="requestsPerSec">0</div>
+                        <div class="resource-bar">
+                            <div class="resource-bar-fill" id="requestsBar" style="width: 0%;"></div>
+                        </div>
+                        <div class="resource-details" id="requestsDetails">Peak: 0 req/s</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include dashboard scripts -->
+    <script src="metrics-collector.js"></script>
+    <script src="alerts.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

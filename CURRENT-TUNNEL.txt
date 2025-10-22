@@ -1,0 +1,127 @@
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║              🌐 YOUR ARIA ASSISTANT IS NOW PUBLIC 🌐          ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+PUBLIC URL (HTTPS):
+═══════════════════════════════════════════════════════════════
+
+  https://0d4ca80d394d9aa1e80634ed44cb18d3.serveo.net
+
+
+FEATURES:
+═══════════════════════════════════════════════════════════════
+
+  ✓ HTTPS encryption enabled
+  ✓ WebSocket support (for real-time communication)
+  ✓ No signup or authentication required
+  ✓ Accessible from anywhere in the world
+  ✓ Auto-reconnect on disconnection
+
+
+HOW TO USE:
+═══════════════════════════════════════════════════════════════
+
+  1. Share this URL with anyone who needs access
+  2. Open the URL in any web browser
+  3. Your ARIA assistant will work exactly as on localhost
+  4. All features (voice, text, etc.) are fully functional
+
+
+TUNNEL STATUS:
+═══════════════════════════════════════════════════════════════
+
+  Status: ✓ ACTIVE
+  Method: serveo.net (SSH tunnel)
+  Local Port: 3002
+  Started: 2025-10-21 11:13 GMT
+
+
+MANAGING YOUR TUNNEL:
+═══════════════════════════════════════════════════════════════
+
+  Check status:
+    ./tunnel-status.sh
+
+  View logs:
+    tail -f /tmp/ish-tunnel.log
+
+  Stop tunnel:
+    pkill -f 'ssh.*serveo'
+
+  Restart tunnel:
+    ./start-tunnel.sh
+
+
+IMPORTANT NOTES:
+═══════════════════════════════════════════════════════════════
+
+  ⚠ This URL is public - anyone with it can access your assistant
+  ⚠ The URL may change if the tunnel disconnects
+  ⚠ For production use, add authentication to your app
+  ⚠ Stop the tunnel when not needed: Ctrl+C or kill command
+
+
+TROUBLESHOOTING:
+═══════════════════════════════════════════════════════════════
+
+  URL not working?
+    → Check status: ./tunnel-status.sh
+    → View logs: tail -f /tmp/ish-tunnel.log
+    → Restart: pkill -f serveo && ./start-tunnel.sh
+
+  Connection slow?
+    → Normal for free tunneling services
+    → Try alternative: ssh -R 80:localhost:3002 nokey@localhost.run
+
+  Tunnel disconnected?
+    → Auto-reconnect is enabled in ./start-tunnel.sh
+    → Manual restart: ./start-tunnel.sh
+
+
+TESTING:
+═══════════════════════════════════════════════════════════════
+
+  Test from command line:
+    curl https://0d4ca80d394d9aa1e80634ed44cb18d3.serveo.net
+
+  Test WebSocket (browser console):
+    const ws = new WebSocket('wss://0d4ca80d394d9aa1e80634ed44cb18d3.serveo.net');
+    ws.onopen = () => console.log('✓ WebSocket connected!');
+
+
+SECURITY:
+═══════════════════════════════════════════════════════════════
+
+  Current setup: NO AUTHENTICATION
+  Recommendation for sensitive data:
+    → Add basic auth to your Express app
+    → Use environment-specific tunnels
+    → Monitor access logs regularly
+
+
+NEXT STEPS:
+═══════════════════════════════════════════════════════════════
+
+  1. ✓ Tunnel is running
+  2. Open https://0d4ca80d394d9aa1e80634ed44cb18d3.serveo.net
+  3. Test all features
+  4. Share URL with team members
+  5. Monitor logs for any issues
+
+
+SUPPORT:
+═══════════════════════════════════════════════════════════════
+
+  Full documentation: cat TUNNELING.md
+  Quick reference: cat QUICK-START.txt
+  Run tests: ./test-tunnel.sh
+  Check status: ./tunnel-status.sh
+
+
+╔══════════════════════════════════════════════════════════════╗
+║  Your ARIA assistant is ready! Open the URL above to start.  ║
+╚══════════════════════════════════════════════════════════════╝
+
+Generated: 2025-10-21 11:13:08 GMT

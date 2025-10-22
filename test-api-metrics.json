@@ -1,0 +1,35 @@
+{
+  "requests": {
+    "anthropic": {
+      "total": 6,
+      "success": 0,
+      "error": 6,
+      "successRate": 0
+    }
+  },
+  "tokens": {
+    "anthropic": {
+      "input": 0,
+      "output": 0,
+      "total": 0
+    }
+  },
+  "costs": {
+    "anthropic": "0.0000"
+  },
+  "latency": {
+    "anthropic": {
+      "min": 112,
+      "max": 225,
+      "avg": 146.83333333333334,
+      "p50": 123,
+      "p95": 225,
+      "p99": 225
+    }
+  },
+  "errors": {
+    "anthropic": {
+      "404": 6
+    }
+  }
+}

@@ -1,0 +1,73 @@
+# Dockerfile for Mobile PWA
+FROM node:18-alpine
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    dumb-init \
+    nginx
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy PWA files
+COPY --chown=nodejs:nodejs mobile-app/ ./mobile-app/
+
+# Create necessary directories
+RUN mkdir -p /var/cache/nginx /var/log/nginx && \
+    chown -R nodejs:nodejs /var/cache/nginx /var/log/nginx
+
+# Create simple HTTP server for PWA
+RUN echo 'const http = require("http"); \
+const fs = require("fs"); \
+const path = require("path"); \
+const port = process.env.PORT || 3002; \
+const mimeTypes = { \
+  ".html": "text/html", \
+  ".js": "text/javascript", \
+  ".css": "text/css", \
+  ".json": "application/json", \
+  ".png": "image/png", \
+  ".jpg": "image/jpg", \
+  ".webp": "image/webp", \
+  ".svg": "image/svg+xml", \
+  ".webmanifest": "application/manifest+json" \
+}; \
+const server = http.createServer((req, res) => { \
+  if (req.url === "/health") { \
+    res.writeHead(200); \
+    res.end("OK"); \
+    return; \
+  } \
+  const filePath = req.url === "/" ? "/app/mobile-app/index.html" : path.join("/app/mobile-app", req.url); \
+  fs.readFile(filePath, (err, data) => { \
+    if (err) { \
+      res.writeHead(404); \
+      res.end("Not Found"); \
+      return; \
+    } \
+    const ext = path.extname(filePath); \
+    res.writeHead(200, {"Content-Type": mimeTypes[ext] || "text/plain"}); \
+    res.end(data); \
+  }); \
+}); \
+server.listen(port, "0.0.0.0", () => console.log(`PWA Server running on port ${port}`));' > /app/server.js
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port
+EXPOSE 3002
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3002/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"
+
+# Use dumb-init to handle signals
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
+# Start server
+CMD ["node", "/app/server.js"]

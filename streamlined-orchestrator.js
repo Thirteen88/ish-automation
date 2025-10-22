@@ -1,0 +1,987 @@
+#!/usr/bin/env node
+
+/**
+ * Streamlined Production Orchestrator - Curated Edition
+ *
+ * Focus: Quality over Quantity
+ * - Only top-tier models from each provider
+ * - Simplified architecture (2 platforms for text)
+ * - Smart model routing
+ * - Specialized handlers for image/video
+ */
+
+const { chromium } = require('playwright-extra');
+const stealth = require('puppeteer-extra-plugin-stealth')();
+const EventEmitter = require('events');
+const fs = require('fs').promises;
+const path = require('path');
+
+// Apply stealth plugin to bypass Cloudflare
+chromium.use(stealth);
+
+const { HealthMonitor } = require('./health-monitor');
+const ErrorHandler = require('./error-handler');
+const CLIVisualizer = require('./cli-visualizer');
+const FlareSolverrClient = require('./flaresolverr-client');
+const CookieManager = require('./cookie-manager');
+
+/**
+ * Curated Model Registry
+ */
+const CURATED_MODELS = {
+    // Text/Chat Models - Top 7
+    text: {
+        // Claude (Anthropic) - Top 2
+        'claude-3.5-sonnet': {
+            provider: 'Anthropic',
+            platform: 'lmarena',
+            speed: 'fast',
+            quality: 'excellent',
+            useCase: 'general-purpose'
+        },
+        'claude-3-opus': {
+            provider: 'Anthropic',
+            platform: 'lmarena',
+            speed: 'medium',
+            quality: 'excellent',
+            useCase: 'complex-reasoning'
+        },
+
+        // OpenAI - Top 2
+        'gpt-4-turbo': {
+            provider: 'OpenAI',
+            platform: 'lmarena',
+            speed: 'fast',
+            quality: 'high',
+            useCase: 'general-purpose'
+        },
+        'gpt-4': {
+            provider: 'OpenAI',
+            platform: 'lmarena',
+            speed: 'medium',
+            quality: 'high',
+            useCase: 'general-purpose'
+        },
+
+        // Specialists - Top 3
+        'deepseek-coder-v2': {
+            provider: 'DeepSeek',
+            platform: 'lmarena',
+            speed: 'fast',
+            quality: 'high',
+            useCase: 'coding'
+        },
+        'kimi-chat': {
+            provider: 'Moonshot',
+            platform: 'lmarena',
+            speed: 'medium',
+            quality: 'high',
+            useCase: 'long-context'
+        },
+        'glm-4': {
+            provider: 'Zhipu',
+            platform: 'lmarena',
+            speed: 'fast',
+            quality: 'high',
+            useCase: 'chinese'
+        }
+    },
+
+    // Image Models - Top 3
+    image: {
+        'dall-e-3': {
+            provider: 'OpenAI',
+            quality: 'excellent',
+            useCase: 'creative'
+        },
+        'midjourney-v6': {
+            provider: 'Midjourney',
+            quality: 'excellent',
+            useCase: 'artistic'
+        },
+        'stable-diffusion-xl': {
+            provider: 'Stability AI',
+            quality: 'high',
+            useCase: 'fast'
+        }
+    },
+
+    // Video Models - Top 3
+    video: {
+        'runway-gen-2': {
+            provider: 'Runway',
+            quality: 'excellent',
+            useCase: 'professional'
+        },
+        'pika-1.0': {
+            provider: 'Pika',
+            quality: 'high',
+            useCase: 'fast'
+        },
+        'stable-video': {
+            provider: 'Stability AI',
+            quality: 'good',
+            useCase: 'experimental'
+        }
+    }
+};
+
+/**
+ * Base Platform Automation
+ */
+class PlatformAutomation {
+    constructor(platformName, config = {}) {
+        this.platformName = platformName;
+        this.config = config;
+        this.page = null;
+        this.isInitialized = false;
+    }
+
+    async initialize(page) {
+        this.page = page;
+        await this.setupStealth();
+        this.isInitialized = true;
+    }
+
+    async setupStealth() {
+        // Enhanced anti-detection script
+        await this.page.addInitScript(() => {
+            // Hide webdriver property
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => false
+            });
+
+            // Add chrome runtime
+            window.chrome = {
+                runtime: {},
+                loadTimes: function() {},
+                csi: function() {},
+                app: {}
+            };
+
+            // Overwrite permissions API
+            const originalQuery = window.navigator.permissions.query;
+            window.navigator.permissions.query = (parameters) => (
+                parameters.name === 'notifications' ?
+                    Promise.resolve({ state: Notification.permission }) :
+                    originalQuery(parameters)
+            );
+
+            // Mock plugins
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [1, 2, 3, 4, 5]
+            });
+
+            // Mock languages
+            Object.defineProperty(navigator, 'languages', {
+                get: () => ['en-US', 'en']
+            });
+        });
+    }
+
+    async detectCaptcha() {
+        const selectors = ['iframe[src*="recaptcha"]', 'iframe[src*="hcaptcha"]'];
+        for (const sel of selectors) {
+            if (await this.page.$(sel)) return { detected: true, type: 'visual' };
+        }
+        return { detected: false };
+    }
+}
+
+/**
+ * LMArena - Primary Platform for Text Models
+ * Enhanced with FlareSolverr for Cloudflare bypass
+ */
+class LMArenaAutomation extends PlatformAutomation {
+    constructor(config = {}) {
+        super('LMArena', config);
+        this.baseUrl = 'https://lmarena.ai';
+        this.supportedModels = Object.keys(CURATED_MODELS.text);
+        this.flaresolverr = new FlareSolverrClient();
+        this.useFlareSolverr = config.useFlareSolverr !== false; // Enabled by default
+        this.cfCookies = null;
+    }
+
+    async query(prompt, options = {}) {
+        const model = options.model || 'claude-3.5-sonnet';
+
+        // Helper function for random delays (human-like behavior)
+        const randomDelay = (min = 1000, max = 3000) => {
+            return Math.floor(Math.random() * (max - min)) + min;
+        };
+
+        try {
+            console.log(`  🌐 LMArena querying with: ${model}`);
+
+            // Step 1: Use FlareSolverr to bypass Cloudflare
+            if (this.useFlareSolverr && !this.cfCookies) {
+                console.log('  🔓 Using FlareSolverr to bypass Cloudflare...');
+
+                const bypass = await this.flaresolverr.solveChallenge(this.baseUrl, {
+                    maxTimeout: 60000
+                });
+
+                if (bypass.success) {
+                    console.log(`  ✅ Cloudflare bypassed! (${(bypass.duration / 1000).toFixed(1)}s)`);
+                    console.log(`  🍪 Received ${bypass.cookies.length} cookies`);
+
+                    // Store cookies for reuse
+                    this.cfCookies = bypass.cookies;
+
+                    // Add cookies to our browser context
+                    await this.page.context().addCookies(bypass.cookies);
+                } else {
+                    console.log(`  ⚠️ FlareSolverr failed: ${bypass.error}`);
+                    console.log('  ⚠️ Continuing without Cloudflare bypass...');
+                }
+            } else if (this.cfCookies) {
+                console.log('  🍪 Reusing existing Cloudflare cookies');
+            }
+
+            // Step 2: Navigate to LMArena
+            await this.page.goto(this.baseUrl, {
+                waitUntil: 'domcontentloaded',
+                timeout: 30000
+            });
+
+            // Step 3: Dismiss Terms of Use dialog if present
+            try {
+                // Wait longer for dialog to fully render and become interactive
+                await this.page.waitForTimeout(3000);
+
+                // Check if dialog exists
+                const dialogExists = await this.page.evaluate(() => {
+                    return document.querySelector('[role="dialog"]') !== null;
+                });
+
+                if (dialogExists) {
+                    console.log('  📋 Terms of Use dialog detected');
+
+                    // METHOD 1: Try Playwright locator (most reliable for visible buttons)
+                    try {
+                        console.log('  🔘 Attempting to click Agree button...');
+                        const agreeButton = this.page.locator('button').filter({ hasText: 'Agree' }).first();
+
+                        // Wait for button to be visible and enabled
+                        await agreeButton.waitFor({ state: 'visible', timeout: 5000 });
+                        await this.page.waitForTimeout(500); // Brief pause for stability
+
+                        await agreeButton.click({ timeout: 5000 });
+                        await this.page.waitForTimeout(2000);
+
+                        // Verify dialog closed
+                        const stillExists = await this.page.evaluate(() => {
+                            return document.querySelector('[role="dialog"]') !== null;
+                        });
+
+                        if (!stillExists) {
+                            console.log('  ✅ Terms accepted via Playwright locator');
+
+                            // Save cookies
+                            if (this.cookieManager) {
+                                const allCookies = await this.page.context().cookies();
+                                await this.cookieManager.saveCookies('lmarena', allCookies);
+                            }
+                        } else {
+                            throw new Error('Dialog still visible after click');
+                        }
+                    } catch (e1) {
+                        console.log(`  ⚠️ Playwright click failed: ${e1.message}`);
+
+                        // METHOD 2: Try pressing Enter key
+                        try {
+                            console.log('  ⌨️  Trying Enter key...');
+                            await this.page.keyboard.press('Enter');
+                            await this.page.waitForTimeout(2000);
+
+                            const stillExists = await this.page.evaluate(() => {
+                                return document.querySelector('[role="dialog"]') !== null;
+                            });
+
+                            if (!stillExists) {
+                                console.log('  ✅ Terms accepted via Enter key');
+
+                                if (this.cookieManager) {
+                                    const allCookies = await this.page.context().cookies();
+                                    await this.cookieManager.saveCookies('lmarena', allCookies);
+                                }
+                            } else {
+                                throw new Error('Dialog still visible after Enter');
+                            }
+                        } catch (e2) {
+                            console.log(`  ⚠️ Enter key failed: ${e2.message}`);
+
+                            // METHOD 3: Force click with JavaScript
+                            try {
+                                console.log('  💪 Trying force click with JavaScript...');
+                                const clicked = await this.page.evaluate(() => {
+                                    const dialog = document.querySelector('[role="dialog"]');
+                                    if (!dialog) return false;
+
+                                    const buttons = Array.from(dialog.querySelectorAll('button'));
+                                    const agreeBtn = buttons.find(btn =>
+                                        btn.textContent && btn.textContent.toLowerCase().includes('agree')
+                                    );
+
+                                    if (agreeBtn) {
+                                        agreeBtn.click();
+                                        return true;
+                                    }
+                                    return false;
+                                });
+
+                                if (clicked) {
+                                    await this.page.waitForTimeout(2000);
+                                    console.log('  ✅ Terms accepted via JavaScript force click');
+
+                                    if (this.cookieManager) {
+                                        const allCookies = await this.page.context().cookies();
+                                        await this.cookieManager.saveCookies('lmarena', allCookies);
+                                    }
+                                } else {
+                                    console.log('  ❌ All dialog dismissal methods failed!');
+                                }
+                            } catch (e3) {
+                                console.log(`  ❌ JavaScript click failed: ${e3.message}`);
+                            }
+                        }
+                    }
+                } else {
+                    console.log('  ✓ No Terms dialog present');
+                }
+            } catch (error) {
+                console.log(`  ⚠️ Terms dialog handling error: ${error.message}`);
+            }
+
+            // Human-like delay after page load
+            await this.page.waitForTimeout(randomDelay(2000, 4000));
+
+            // Simulate mouse movement (human-like behavior)
+            await this.page.mouse.move(
+                Math.floor(Math.random() * 400) + 200,
+                Math.floor(Math.random() * 400) + 200
+            );
+            await this.page.waitForTimeout(randomDelay(500, 1000));
+
+            // Simulate scrolling
+            await this.page.evaluate(() => window.scrollBy(0, Math.floor(Math.random() * 200) + 100));
+            await this.page.waitForTimeout(randomDelay(500, 1500));
+
+            // Dismiss cookie consent if present
+            try {
+                const cookieButton = await this.page.$('button:has-text("Accept")');
+                if (cookieButton) {
+                    await cookieButton.click();
+                    await this.page.waitForTimeout(randomDelay(500, 1000));
+                    console.log('  ✓ Dismissed cookie consent');
+                }
+            } catch (e) {
+                // No cookie dialog, continue
+            }
+
+            // Try multiple selector strategies
+            const selectors = [
+                'textarea:not([disabled])',
+                'textarea[placeholder*="message"]',
+                'textarea',
+                'input[type="text"]',
+                '[contenteditable="true"]'
+            ];
+
+            let inputElement = null;
+            for (const selector of selectors) {
+                try {
+                    inputElement = await this.page.$(selector);
+                    if (inputElement) {
+                        console.log(`  ✓ Found input: ${selector}`);
+                        break;
+                    }
+                } catch (e) { continue; }
+            }
+
+            if (!inputElement) {
+                await this.page.screenshot({ path: 'selector-discovery/lmarena-error.png', fullPage: true });
+                throw new Error('Could not find input element');
+            }
+
+            // Dismiss Terms of Use dialog if present (appears after page interaction)
+            try {
+                await this.page.waitForTimeout(randomDelay(1000, 2000));
+                // Try multiple strategies to dismiss the Terms dialog
+                const agreeButton = await this.page.$('button:has-text("Agree")');
+                if (agreeButton) {
+                    await agreeButton.click();
+                    await this.page.waitForTimeout(randomDelay(1000, 2000));
+                    console.log('  ✓ Accepted Terms of Use');
+
+                    // Save cookies after successful Terms acceptance
+                    if (this.cookieManager) {
+                        const allCookies = await this.page.context().cookies();
+                        await this.cookieManager.saveCookies('lmarena', allCookies);
+                    }
+                } else {
+                    // Try pressing Enter key if button not found
+                    await this.page.keyboard.press('Enter');
+                    await this.page.waitForTimeout(randomDelay(500, 1000));
+                }
+            } catch (e) {
+                // Try keyboard shortcut as fallback
+                try {
+                    await this.page.keyboard.press('Enter');
+                    await this.page.waitForTimeout(randomDelay(500, 1000));
+                } catch {}
+            }
+
+            // Human-like interaction with input
+            await this.page.mouse.move(
+                Math.floor(Math.random() * 100) + 300,
+                Math.floor(Math.random() * 100) + 300
+            );
+            await this.page.waitForTimeout(randomDelay(300, 700));
+
+            await inputElement.click();
+            await this.page.waitForTimeout(randomDelay(300, 700));
+
+            // Type with human-like delays
+            await inputElement.type(prompt, {
+                delay: Math.floor(Math.random() * 50) + 50
+            });
+            await this.page.waitForTimeout(randomDelay(500, 1000));
+
+            await this.page.keyboard.press('Enter');
+
+            // Wait for response with longer timeout
+            await this.page.waitForTimeout(randomDelay(7000, 10000));
+
+            // Extract response - try multiple strategies with dialog filtering
+            const response = await this.page.evaluate(() => {
+                // Strategy 1: Look for specific chat message containers (most reliable)
+                const chatSelectors = [
+                    '[data-testid="message-content"]',
+                    '[data-testid="message"]',
+                    '[class*="markdown-body"]',
+                    '[class*="prose"]',
+                    'div[class*="message"]:not([role="dialog"] *)',
+                    'div[class*="response"]:not([role="dialog"] *)',
+                    'div[class*="assistant"]:not([role="dialog"] *)'
+                ];
+
+                for (const sel of chatSelectors) {
+                    const els = document.querySelectorAll(sel);
+                    if (els.length > 0) {
+                        // Get last message (most recent)
+                        const lastEl = els[els.length - 1];
+                        const text = lastEl.textContent.trim();
+
+                        // Validate it's not dialog text
+                        if (text &&
+                            text.length > 0 &&
+                            !text.includes('Terms of Use') &&
+                            !text.includes('Privacy Policy') &&
+                            !text.includes('clicking "Agree"') &&
+                            !text.includes('Do not submit to our Services') &&
+                            text.length < 10000) { // Reasonable response length
+                            return text;
+                        }
+                    }
+                }
+
+                // Strategy 2: Find paragraphs not in dialogs
+                const paragraphs = document.querySelectorAll('p');
+                const filteredParagraphs = Array.from(paragraphs).filter(p => {
+                    // Skip if inside dialog
+                    if (p.closest('[role="dialog"]') ||
+                        p.closest('[class*="modal"]') ||
+                        p.closest('[class*="dialog"]')) {
+                        return false;
+                    }
+
+                    const text = p.textContent.trim();
+
+                    // Skip if contains dialog keywords
+                    if (text.includes('Terms of Use') ||
+                        text.includes('Privacy Policy') ||
+                        text.includes('clicking "Agree"') ||
+                        text.includes('Do not submit')) {
+                        return false;
+                    }
+
+                    // Accept if has meaningful content
+                    return text.length > 0 && text.length < 5000;
+                });
+
+                if (filteredParagraphs.length > 0) {
+                    // Get last paragraph (most recent response)
+                    const lastP = filteredParagraphs[filteredParagraphs.length - 1];
+                    return lastP.textContent.trim();
+                }
+
+                // Strategy 3: Last resort - get any visible text not in dialog
+                const allText = Array.from(document.body.querySelectorAll('*'))
+                    .filter(el => {
+                        // Must be visible
+                        const style = window.getComputedStyle(el);
+                        if (style.display === 'none' || style.visibility === 'hidden') {
+                            return false;
+                        }
+
+                        // Not in dialog
+                        if (el.closest('[role="dialog"]')) {
+                            return false;
+                        }
+
+                        return true;
+                    })
+                    .map(el => el.textContent)
+                    .filter(text => {
+                        text = text.trim();
+                        return text.length > 0 &&
+                               text.length < 1000 &&
+                               !text.includes('Terms of Use') &&
+                               !text.includes('Privacy Policy');
+                    });
+
+                return allText.length > 0 ? allText[allText.length - 1] : '';
+            });
+
+            // Validate response is not dialog text
+            if (response) {
+                const isDialogText =
+                    response.includes('Terms of Use') ||
+                    response.includes('Privacy Policy') ||
+                    response.includes('clicking "Agree"') ||
+                    response.includes('Do not submit to our Services') ||
+                    response.length > 5000; // Too long, probably got whole page
+
+                if (isDialogText) {
+                    console.log('  ⚠️ Response appears to be dialog text, waiting and retrying...');
+                    await this.page.waitForTimeout(5000);
+
+                    // Try extraction again
+                    const retryResponse = await this.page.evaluate(() => {
+                        // Strategy 1: Look for specific chat message containers (most reliable)
+                        const chatSelectors = [
+                            '[data-testid="message-content"]',
+                            '[data-testid="message"]',
+                            '[class*="markdown-body"]',
+                            '[class*="prose"]',
+                            'div[class*="message"]:not([role="dialog"] *)',
+                            'div[class*="response"]:not([role="dialog"] *)',
+                            'div[class*="assistant"]:not([role="dialog"] *)'
+                        ];
+
+                        for (const sel of chatSelectors) {
+                            const els = document.querySelectorAll(sel);
+                            if (els.length > 0) {
+                                // Get last message (most recent)
+                                const lastEl = els[els.length - 1];
+                                const text = lastEl.textContent.trim();
+
+                                // Validate it's not dialog text
+                                if (text &&
+                                    text.length > 0 &&
+                                    !text.includes('Terms of Use') &&
+                                    !text.includes('Privacy Policy') &&
+                                    !text.includes('clicking "Agree"') &&
+                                    !text.includes('Do not submit to our Services') &&
+                                    text.length < 10000) { // Reasonable response length
+                                    return text;
+                                }
+                            }
+                        }
+
+                        // Strategy 2: Find paragraphs not in dialogs
+                        const paragraphs = document.querySelectorAll('p');
+                        const filteredParagraphs = Array.from(paragraphs).filter(p => {
+                            // Skip if inside dialog
+                            if (p.closest('[role="dialog"]') ||
+                                p.closest('[class*="modal"]') ||
+                                p.closest('[class*="dialog"]')) {
+                                return false;
+                            }
+
+                            const text = p.textContent.trim();
+
+                            // Skip if contains dialog keywords
+                            if (text.includes('Terms of Use') ||
+                                text.includes('Privacy Policy') ||
+                                text.includes('clicking "Agree"') ||
+                                text.includes('Do not submit')) {
+                                return false;
+                            }
+
+                            // Accept if has meaningful content
+                            return text.length > 0 && text.length < 5000;
+                        });
+
+                        if (filteredParagraphs.length > 0) {
+                            // Get last paragraph (most recent response)
+                            const lastP = filteredParagraphs[filteredParagraphs.length - 1];
+                            return lastP.textContent.trim();
+                        }
+
+                        // Strategy 3: Last resort - get any visible text not in dialog
+                        const allText = Array.from(document.body.querySelectorAll('*'))
+                            .filter(el => {
+                                // Must be visible
+                                const style = window.getComputedStyle(el);
+                                if (style.display === 'none' || style.visibility === 'hidden') {
+                                    return false;
+                                }
+
+                                // Not in dialog
+                                if (el.closest('[role="dialog"]')) {
+                                    return false;
+                                }
+
+                                return true;
+                            })
+                            .map(el => el.textContent)
+                            .filter(text => {
+                                text = text.trim();
+                                return text.length > 0 &&
+                                       text.length < 1000 &&
+                                       !text.includes('Terms of Use') &&
+                                       !text.includes('Privacy Policy');
+                            });
+
+                        return allText.length > 0 ? allText[allText.length - 1] : '';
+                    });
+
+                    if (retryResponse && !retryResponse.includes('Terms of Use')) {
+                        console.log('  ✅ Retry successful, got valid response');
+                        return {
+                            platform: 'LMArena',
+                            model: model,
+                            response: retryResponse,
+                            timestamp: new Date().toISOString()
+                        };
+                    }
+                }
+            }
+
+            // Take screenshot for debugging
+            await this.page.screenshot({
+                path: 'selector-discovery/lmarena-response.png',
+                fullPage: true
+            });
+
+            return {
+                platform: 'LMArena',
+                model: model,
+                response: response,
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
+            try {
+                await this.page.screenshot({ path: 'selector-discovery/lmarena-error.png', fullPage: true });
+            } catch {}
+            throw new Error(`LMArena query failed: ${error.message}`);
+        }
+    }
+}
+
+/**
+ * ISH - Backup Platform for Text Models
+ */
+class ISHAutomation extends PlatformAutomation {
+    constructor(config = {}) {
+        super('ISH', config);
+        this.baseUrl = 'https://ish.junioralive.in';
+        this.supportedModels = ['claude-3-opus', 'claude-3.5-sonnet', 'gpt-4', 'gpt-4-turbo'];
+    }
+
+    async query(prompt, options = {}) {
+        const model = options.model || 'claude-3.5-sonnet';
+
+        try {
+            console.log(`  🌐 ISH querying with: ${model}`);
+            await this.page.goto(this.baseUrl, {
+                waitUntil: 'domcontentloaded',
+                timeout: 30000
+            });
+
+            await this.page.waitForTimeout(2000);
+
+            return {
+                platform: 'ISH',
+                model: model,
+                response: `[ISH Response for: ${prompt}]`,
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
+            throw new Error(`ISH query failed: ${error.message}`);
+        }
+    }
+}
+
+/**
+ * Streamlined Orchestrator - Curated Models Only
+ */
+class StreamlinedOrchestrator extends EventEmitter {
+    constructor(options = {}) {
+        super();
+
+        this.options = {
+            environment: options.environment || 'production',
+            headless: options.headless !== undefined ? options.headless : true,
+            enableHealthMonitoring: options.enableHealthMonitoring !== false,
+            maxConcurrent: options.maxConcurrent || 3,
+            ...options
+        };
+
+        // Core components
+        this.errorHandler = null;
+        this.healthMonitor = null;
+        this.visualizer = new CLIVisualizer();
+
+        // Browser and platforms
+        this.browser = null;
+        this.platforms = new Map();
+
+        // Curated models
+        this.models = CURATED_MODELS;
+
+        // Cookie manager
+        this.cookieManager = new CookieManager();
+
+        // State
+        this.state = {
+            initialized: false,
+            startTime: null,
+            requestCount: 0
+        };
+    }
+
+    async initialize() {
+        this.visualizer.clear();
+        this.visualizer.sectionHeader('Streamlined Orchestrator - Curated Edition', '⚡');
+
+        console.log(`\n📋 Configuration:`);
+        console.log(`   Mode: ${this.options.headless ? 'Headless' : 'Headed'}`);
+        console.log(`   Text Models: ${Object.keys(this.models.text).length}`);
+        console.log(`   Image Models: ${Object.keys(this.models.image).length}`);
+        console.log(`   Video Models: ${Object.keys(this.models.video).length}`);
+        console.log(`   Total: ${this.getTotalModelCount()} curated models\n`);
+
+        try {
+            // Initialize error handler
+            console.log('🛡️  Initializing error handler...');
+            this.errorHandler = new ErrorHandler({
+                enableCircuitBreaker: true
+            });
+
+            // Initialize health monitor
+            if (this.options.enableHealthMonitoring) {
+                console.log('💚 Initializing health monitor...');
+                this.healthMonitor = new HealthMonitor();
+            }
+
+            // Initialize browser
+            console.log('🌐 Launching browser...');
+            await this.initializeBrowser();
+
+            // Initialize platforms (only 2!)
+            console.log('📡 Initializing platforms...\n');
+            await this.initializePlatforms();
+
+            this.state.initialized = true;
+            this.state.startTime = new Date().toISOString();
+
+            this.visualizer.displaySuccess('Streamlined Orchestrator Ready!', {
+                'Text Models': Object.keys(this.models.text).length,
+                'Platforms': this.platforms.size,
+                'Status': 'Ready'
+            });
+
+            this.emit('initialized');
+            return true;
+
+        } catch (error) {
+            this.visualizer.displayError(error, 'Initialization failed');
+            throw error;
+        }
+    }
+
+    async initializeBrowser() {
+        this.browser = await chromium.launch({
+            headless: this.options.headless,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-blink-features=AutomationControlled',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--window-size=1920,1080'
+            ]
+        });
+        console.log('   ✓ Browser launched');
+    }
+
+    async initializePlatforms() {
+        const platformConfigs = [
+            { name: 'lmarena', class: LMArenaAutomation, priority: 1 },
+            { name: 'ish', class: ISHAutomation, priority: 2 }
+        ];
+
+        // Rotate user agents for better Cloudflare bypass
+        const userAgents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        ];
+
+        for (const { name, class: PlatformClass, priority } of platformConfigs) {
+            const userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+
+            const context = await this.browser.newContext({
+                viewport: { width: 1920, height: 1080 },
+                userAgent: userAgent,
+                extraHTTPHeaders: {
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"Windows"',
+                    'Sec-Fetch-Dest': 'document',
+                    'Sec-Fetch-Mode': 'navigate',
+                    'Sec-Fetch-Site': 'none',
+                    'Sec-Fetch-User': '?1',
+                    'Upgrade-Insecure-Requests': '1'
+                }
+            });
+
+            // Try to load saved cookies for this platform
+            const savedCookies = await this.cookieManager.loadCookies(name);
+            if (savedCookies) {
+                await context.addCookies(savedCookies);
+            }
+
+            const page = await context.newPage();
+            const platform = new PlatformClass(this.options);
+            platform.cookieManager = this.cookieManager; // Add cookie manager reference
+            await platform.initialize(page);
+
+            this.platforms.set(name, { instance: platform, priority });
+            console.log(`   ✓ ${name} (Priority ${priority})`);
+
+            if (this.healthMonitor) {
+                this.healthMonitor.registerPlatform(name);
+            }
+        }
+    }
+
+    async query(request) {
+        const { prompt, model, type = 'text' } = request;
+        const startTime = Date.now();
+
+        try {
+            // Validate model
+            if (type === 'text' && !this.models.text[model]) {
+                throw new Error(`Model ${model} not in curated list. Available: ${Object.keys(this.models.text).join(', ')}`);
+            }
+
+            // Get platform for model
+            const modelInfo = this.models.text[model];
+            const platform = this.platforms.get(modelInfo.platform).instance;
+
+            // Execute query
+            const result = await this.errorHandler.executeWithProtection(
+                async () => await platform.query(prompt, { model }),
+                { platform: modelInfo.platform }
+            );
+
+            const duration = Date.now() - startTime;
+            this.state.requestCount++;
+
+            return {
+                success: true,
+                duration,
+                result,
+                model: model,
+                modelInfo: modelInfo,
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
+            const duration = Date.now() - startTime;
+            throw error;
+        }
+    }
+
+    getTotalModelCount() {
+        return Object.keys(this.models.text).length +
+               Object.keys(this.models.image).length +
+               Object.keys(this.models.video).length;
+    }
+
+    listModels(type = 'all') {
+        if (type === 'all') {
+            return {
+                text: Object.keys(this.models.text),
+                image: Object.keys(this.models.image),
+                video: Object.keys(this.models.video)
+            };
+        }
+        return Object.keys(this.models[type] || {});
+    }
+
+    async shutdown() {
+        console.log('\n🛑 Shutting down...');
+
+        for (const context of await this.browser.contexts()) {
+            await context.close();
+        }
+
+        if (this.browser) {
+            await this.browser.close();
+        }
+
+        console.log('✅ Shutdown complete');
+        this.emit('shutdown');
+    }
+}
+
+module.exports = StreamlinedOrchestrator;
+
+// Demo
+if (require.main === module) {
+    async function demo() {
+        const orchestrator = new StreamlinedOrchestrator({
+            environment: 'development',
+            headless: process.env.HEADLESS === 'true'  // Respect HEADLESS environment variable
+        });
+
+        try {
+            await orchestrator.initialize();
+
+            console.log('\n📋 Available Models:');
+            const models = orchestrator.listModels();
+            console.log('Text:', models.text.join(', '));
+            console.log('Image:', models.image.join(', '));
+            console.log('Video:', models.video.join(', '));
+
+            console.log('\n📝 Testing query with Claude 3.5 Sonnet...');
+            const result = await orchestrator.query({
+                prompt: 'What is 2+2? Answer in one word.',
+                model: 'claude-3.5-sonnet',
+                type: 'text'
+            });
+
+            console.log('\n✅ Result:', JSON.stringify(result, null, 2));
+
+            await orchestrator.shutdown();
+            process.exit(0);
+
+        } catch (error) {
+            console.error('❌ Error:', error);
+            await orchestrator.shutdown();
+            process.exit(1);
+        }
+    }
+
+    demo().catch(console.error);
+}

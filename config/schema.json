@@ -1,0 +1,253 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["environment", "server", "orchestrator", "security"],
+  "properties": {
+    "environment": {
+      "type": "string",
+      "enum": ["development", "staging", "production"],
+      "description": "Current deployment environment"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Configuration version (semantic versioning)"
+    },
+    "server": {
+      "type": "object",
+      "required": ["port", "host"],
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 65535,
+          "description": "Server port number"
+        },
+        "host": {
+          "type": "string",
+          "description": "Server host address"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1000,
+          "description": "Request timeout in milliseconds"
+        },
+        "maxConnections": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum concurrent connections"
+        },
+        "enableCors": {
+          "type": "boolean",
+          "description": "Enable CORS middleware"
+        }
+      }
+    },
+    "orchestrator": {
+      "type": "object",
+      "required": ["headless", "timeout"],
+      "properties": {
+        "headless": {
+          "type": "boolean",
+          "description": "Run browser in headless mode"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 5000,
+          "description": "Operation timeout in milliseconds"
+        },
+        "maxConcurrent": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Maximum concurrent operations"
+        },
+        "retryAttempts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Number of retry attempts for failed operations"
+        },
+        "retryDelay": {
+          "type": "integer",
+          "minimum": 100,
+          "description": "Delay between retries in milliseconds"
+        },
+        "enableCache": {
+          "type": "boolean",
+          "description": "Enable response caching"
+        },
+        "cacheMaxSize": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum cache size in MB"
+        },
+        "cacheTTL": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cache time-to-live in seconds"
+        }
+      }
+    },
+    "api": {
+      "type": "object",
+      "properties": {
+        "rateLimit": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "maxRequests": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "windowMs": {
+              "type": "integer",
+              "minimum": 1000
+            }
+          }
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1000
+        },
+        "maxRetries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "required": ["enableEncryption", "enableAuditLog"],
+      "properties": {
+        "enableEncryption": {
+          "type": "boolean",
+          "description": "Enable data encryption"
+        },
+        "encryptionAlgorithm": {
+          "type": "string",
+          "enum": ["aes-256-gcm", "aes-256-cbc"],
+          "description": "Encryption algorithm"
+        },
+        "enableAuditLog": {
+          "type": "boolean",
+          "description": "Enable audit logging"
+        },
+        "secretRotationDays": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Days before secret rotation required"
+        },
+        "allowedOrigins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Allowed CORS origins"
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["error", "warn", "info", "debug", "verbose"],
+          "description": "Logging level"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["json", "simple", "verbose"],
+          "description": "Log format"
+        },
+        "enableConsole": {
+          "type": "boolean",
+          "description": "Enable console logging"
+        },
+        "enableFile": {
+          "type": "boolean",
+          "description": "Enable file logging"
+        },
+        "filePath": {
+          "type": "string",
+          "description": "Log file path"
+        },
+        "maxFileSize": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum log file size in MB"
+        },
+        "maxFiles": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum number of log files to keep"
+        }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable monitoring"
+        },
+        "healthCheckInterval": {
+          "type": "integer",
+          "minimum": 1000,
+          "description": "Health check interval in milliseconds"
+        },
+        "metricsInterval": {
+          "type": "integer",
+          "minimum": 1000,
+          "description": "Metrics collection interval in milliseconds"
+        },
+        "alertThresholds": {
+          "type": "object",
+          "properties": {
+            "cpuPercent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "memoryPercent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "errorRate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    },
+    "featureFlags": {
+      "type": "object",
+      "description": "Feature flags configuration",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "rolloutPercentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "enabledUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

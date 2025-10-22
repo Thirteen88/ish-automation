@@ -1,0 +1,133 @@
+{
+  "platforms": {
+    "lmArena": {
+      "enabled": true,
+      "url": "https://lmarena.ai/?mode=direct",
+      "fallbackEnabled": true,
+      "timeout": 30000,
+      "models": {
+        "openai": {
+          "gpt-4-turbo-2024-04-09": { "speed": "fast", "quality": "high", "cost": "high", "context": 128000 },
+          "gpt-4-0125-preview": { "speed": "fast", "quality": "high", "cost": "high", "context": 128000 },
+          "gpt-3.5-turbo-0125": { "speed": "very-fast", "quality": "good", "cost": "low", "context": 16385 }
+        },
+        "anthropic": {
+          "claude-3-opus-20240229": { "speed": "medium", "quality": "excellent", "cost": "high", "context": 200000 },
+          "claude-3-sonnet-20240229": { "speed": "fast", "quality": "high", "cost": "medium", "context": 200000 },
+          "claude-3-haiku-20240307": { "speed": "very-fast", "quality": "good", "cost": "low", "context": 200000 }
+        },
+        "google": {
+          "gemini-1.5-pro-latest": { "speed": "fast", "quality": "high", "cost": "medium", "context": 1048576 },
+          "gemini-1.5-flash-latest": { "speed": "very-fast", "quality": "good", "cost": "low", "context": 1048576 },
+          "gemini-pro": { "speed": "fast", "quality": "high", "cost": "medium", "context": 32000 }
+        },
+        "meta": {
+          "llama-3-70b-instruct": { "speed": "medium", "quality": "high", "cost": "low", "context": 8192 },
+          "llama-3-8b-instruct": { "speed": "very-fast", "quality": "good", "cost": "very-low", "context": 8192 },
+          "codellama-70b-instruct": { "speed": "medium", "quality": "high", "cost": "low", "context": 16384 }
+        },
+        "mistral": {
+          "mixtral-8x22b-instruct": { "speed": "medium", "quality": "high", "cost": "medium", "context": 65536 },
+          "mixtral-8x7b-instruct": { "speed": "fast", "quality": "good", "cost": "low", "context": 32768 },
+          "mistral-large-2402": { "speed": "medium", "quality": "high", "cost": "medium", "context": 32768 },
+          "mistral-medium": { "speed": "fast", "quality": "good", "cost": "low", "context": 32768 }
+        },
+        "cohere": {
+          "command-r-plus": { "speed": "medium", "quality": "high", "cost": "medium", "context": 128000 },
+          "command-r": { "speed": "fast", "quality": "good", "cost": "low", "context": 128000 }
+        },
+        "other": {
+          "qwen1.5-110b-chat": { "speed": "medium", "quality": "high", "cost": "medium", "context": 32768 },
+          "qwen1.5-72b-chat": { "speed": "fast", "quality": "good", "cost": "low", "context": 32768 },
+          "yi-34b-chat": { "speed": "fast", "quality": "good", "cost": "low", "context": 200000 },
+          "dbrx-instruct": { "speed": "fast", "quality": "high", "cost": "medium", "context": 32768 },
+          "reka-core-20240415": { "speed": "medium", "quality": "high", "cost": "medium", "context": 128000 },
+          "reka-flash-20240226": { "speed": "very-fast", "quality": "good", "cost": "low", "context": 128000 },
+          "deepseek-coder-v2": { "speed": "fast", "quality": "high", "cost": "low", "context": 128000 },
+          "wizardlm-2-8x22b": { "speed": "medium", "quality": "high", "cost": "medium", "context": 65536 },
+          "starling-lm-7b-beta": { "speed": "very-fast", "quality": "good", "cost": "very-low", "context": 8192 }
+        }
+      }
+    },
+    "ish": {
+      "enabled": true,
+      "url": "https://ish.junioralive.in/",
+      "fallbackEnabled": true,
+      "timeout": 60000,
+      "models": {
+        "claude-3-opus": { "speed": "medium", "quality": "excellent", "cost": "high", "context": 200000 },
+        "claude-3-sonnet": { "speed": "fast", "quality": "high", "cost": "medium", "context": 200000 },
+        "gpt-4": { "speed": "medium", "quality": "high", "cost": "high", "context": 128000 },
+        "gpt-4-turbo": { "speed": "fast", "quality": "high", "cost": "high", "context": 128000 },
+        "gemini-pro": { "speed": "fast", "quality": "high", "cost": "medium", "context": 32000 }
+      }
+    }
+  },
+  "strategies": {
+    "fastest": {
+      "description": "Select the fastest responding models",
+      "modelCount": 5,
+      "preferredSpeed": ["very-fast", "fast"],
+      "platforms": ["lmArena", "ish"]
+    },
+    "highest-quality": {
+      "description": "Select models with highest quality ratings",
+      "modelCount": 5,
+      "preferredQuality": ["excellent", "high"],
+      "platforms": ["lmArena", "ish"]
+    },
+    "balanced": {
+      "description": "Balance between speed and quality",
+      "modelCount": 7,
+      "preferredSpeed": ["fast", "medium"],
+      "preferredQuality": ["high", "good"],
+      "platforms": ["lmArena", "ish"]
+    },
+    "comprehensive": {
+      "description": "Query many models for consensus",
+      "modelCount": 15,
+      "platforms": ["lmArena", "ish"]
+    },
+    "cost-effective": {
+      "description": "Use low-cost models",
+      "modelCount": 5,
+      "preferredCost": ["very-low", "low"],
+      "platforms": ["lmArena"]
+    },
+    "coding": {
+      "description": "Models optimized for code generation",
+      "modelCount": 5,
+      "specificModels": [
+        "codellama-70b-instruct",
+        "deepseek-coder-v2",
+        "claude-3-sonnet",
+        "gpt-4-turbo-2024-04-09",
+        "mixtral-8x7b-instruct"
+      ]
+    }
+  },
+  "fallback": {
+    "enabled": true,
+    "maxAttempts": 3,
+    "rules": [
+      {
+        "if": "platform_unavailable",
+        "then": "switch_platform"
+      },
+      {
+        "if": "model_timeout",
+        "then": "use_faster_model"
+      },
+      {
+        "if": "model_error",
+        "then": "use_alternative_model"
+      }
+    ]
+  },
+  "performance": {
+    "tracking": true,
+    "saveHistory": true,
+    "adaptiveSelection": true,
+    "updateInterval": 100
+  }
+}

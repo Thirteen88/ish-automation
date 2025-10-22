@@ -1,0 +1,379 @@
+{
+  "timestamp": "2025-10-21T20:19:26.814Z",
+  "summary": {
+    "totalPlatforms": 3,
+    "testedPlatforms": 3,
+    "successfulPlatforms": 1,
+    "failedPlatforms": 2,
+    "totalSelectors": 42,
+    "workingSelectors": 5,
+    "failedSelectors": 8
+  },
+  "productionReady": [
+    {
+      "name": "huggingface",
+      "displayName": "HuggingChat",
+      "difficulty": "easy",
+      "authRequired": false,
+      "selectors": {
+        "promptInput": {
+          "selectorType": "promptInput",
+          "totalSelectors": 5,
+          "testedSelectors": [
+            {
+              "selector": "textarea[placeholder*='Ask anything']",
+              "index": 0,
+              "found": true,
+              "visible": true,
+              "timing": 34
+            },
+            {
+              "selector": "textarea.scroll-p-3",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea.scroll-p-3')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "textarea[rows]",
+              "index": 2,
+              "found": true,
+              "visible": true,
+              "timing": 7
+            },
+            {
+              "selector": "form textarea",
+              "index": 3,
+              "found": true,
+              "visible": true,
+              "timing": 7
+            },
+            {
+              "selector": "textarea",
+              "index": 4,
+              "found": true,
+              "visible": true,
+              "timing": 6
+            }
+          ],
+          "found": true,
+          "foundSelector": "textarea[placeholder*='Ask anything']",
+          "foundIndex": 0,
+          "timing": {
+            "firstMatch": 34
+          }
+        },
+        "submitButton": {
+          "selectorType": "submitButton",
+          "totalSelectors": 4,
+          "testedSelectors": [
+            {
+              "selector": "button[type='submit']",
+              "index": 0,
+              "found": true,
+              "visible": true,
+              "timing": 7
+            },
+            {
+              "selector": "button:has(svg)",
+              "index": 1,
+              "found": true,
+              "visible": false,
+              "timing": 7
+            },
+            {
+              "selector": "button:has-text('Submit')",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'Submit\\')')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "form button[type='submit']",
+              "index": 3,
+              "found": true,
+              "visible": true,
+              "timing": 7
+            }
+          ],
+          "found": true,
+          "foundSelector": "button[type='submit']",
+          "foundIndex": 0,
+          "timing": {
+            "firstMatch": 7
+          }
+        },
+        "responseContainer": {
+          "selectorType": "responseContainer",
+          "totalSelectors": 4,
+          "testedSelectors": [
+            {
+              "selector": "div.prose",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div.prose')\u001b[22m\n",
+              "timing": 5002
+            },
+            {
+              "selector": "div[class*='message']",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[class*=\\'message\\']')\u001b[22m\n",
+              "timing": 5000
+            },
+            {
+              "selector": "div.max-w-3xl",
+              "index": 2,
+              "found": true,
+              "visible": true,
+              "timing": 6
+            },
+            {
+              "selector": "main div[class*='prose']",
+              "index": 3,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main div[class*=\\'prose\\']')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": true,
+          "foundSelector": "div.max-w-3xl",
+          "foundIndex": 2,
+          "timing": {
+            "firstMatch": 6
+          }
+        },
+        "streamingIndicator": {
+          "selectorType": "streamingIndicator",
+          "totalSelectors": 3,
+          "testedSelectors": [
+            {
+              "selector": "div.animate-pulse",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div.animate-pulse')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "div[class*='loading']",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[class*=\\'loading\\']')\u001b[22m\n",
+              "timing": 5002
+            },
+            {
+              "selector": "svg.animate-spin",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('svg.animate-spin')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        },
+        "errorMessage": {
+          "selectorType": "errorMessage",
+          "totalSelectors": 3,
+          "testedSelectors": [
+            {
+              "selector": "div.bg-red-50",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div.bg-red-50')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "div[role='alert']",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[role=\\'alert\\']')\u001b[22m\n",
+              "timing": 5000
+            },
+            {
+              "selector": "div[class*='error']",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[class*=\\'error\\']')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        },
+        "newChatButton": {
+          "selectorType": "newChatButton",
+          "totalSelectors": 3,
+          "testedSelectors": [
+            {
+              "selector": "a:has-text('New Chat')",
+              "index": 0,
+              "found": true,
+              "visible": false,
+              "timing": 7
+            },
+            {
+              "selector": "button:has-text('New Chat')",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'New Chat\\')')\u001b[22m\n",
+              "timing": 5000
+            },
+            {
+              "selector": "a[href='/chat']",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href=\\'/chat\\']')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": true,
+          "foundSelector": "a:has-text('New Chat')",
+          "foundIndex": 0,
+          "timing": {
+            "firstMatch": 7
+          }
+        },
+        "acceptTermsButton": {
+          "selectorType": "acceptTermsButton",
+          "totalSelectors": 3,
+          "testedSelectors": [
+            {
+              "selector": "button:has-text('Accept')",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'Accept\\')')\u001b[22m\n",
+              "timing": 5002
+            },
+            {
+              "selector": "button:has-text('I agree')",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'I agree\\')')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "button:has-text('Continue')",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'Continue\\')')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        }
+      },
+      "timing": {
+        "navigation": 440
+      },
+      "phase": "phase1"
+    }
+  ],
+  "needsWork": [
+    {
+      "name": "lmarena",
+      "displayName": "LMArena (LMSys)",
+      "issues": [],
+      "recommendations": [],
+      "error": "page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://lmarena.ai/?mode=direct\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "name": "perplexity",
+      "displayName": "Perplexity AI",
+      "issues": [
+        "Missing submitButton",
+        "Missing responseContainer",
+        "Missing streamingIndicator",
+        "Missing errorMessage",
+        "Missing newChatButton"
+      ],
+      "recommendations": [
+        {
+          "type": "selectors",
+          "priority": "high",
+          "message": "Update selectors for: submitButton, responseContainer, streamingIndicator, errorMessage, newChatButton",
+          "action": "Use discover-selectors.js to find working selectors"
+        },
+        {
+          "type": "optimization",
+          "priority": "medium",
+          "message": "promptInput selector found at position 4",
+          "action": "Move working selector to position 1 for better performance"
+        }
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "type": "testing",
+      "priority": "high",
+      "message": "Fix selectors for additional platforms",
+      "action": "Use discover-selectors.js to find working selectors"
+    }
+  ],
+  "deployment": {
+    "phase1": {
+      "description": "Initial deployment with proven platforms",
+      "platforms": [
+        "lmarena",
+        "huggingface"
+      ],
+      "timeline": "Week 1-2",
+      "goals": [
+        "Validate selector accuracy",
+        "Test response extraction",
+        "Measure reliability",
+        "Optimize rate limiting"
+      ]
+    },
+    "phase2": {
+      "description": "Add platforms with moderate complexity",
+      "platforms": [
+        "perplexity"
+      ],
+      "timeline": "Week 3-4",
+      "goals": [
+        "Handle rate limiting gracefully",
+        "Test on platforms with restrictions",
+        "Implement fallback strategies"
+      ]
+    },
+    "phase3": {
+      "description": "Add authenticated platforms",
+      "platforms": [
+        "claude",
+        "chatgpt",
+        "gemini"
+      ],
+      "timeline": "Week 5+",
+      "goals": [
+        "Implement cookie/session management",
+        "Handle authentication flows",
+        "Manage CAPTCHA scenarios"
+      ]
+    }
+  }
+}

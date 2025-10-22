@@ -1,0 +1,83 @@
+# Production Browser Automation - .gitignore
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Sensitive data - NEVER COMMIT THESE
+cookies/
+sessions/
+cache/
+
+# Screenshots (may contain sensitive data)
+screenshots/
+
+# Downloads
+downloads/
+
+# Build output
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Analytics data (may contain sensitive info)
+analytics.json
+performance-stats.json
+
+# Conversation history (may contain sensitive data)
+*-conversation-history.json
+conversation-history.json
+
+# API config with keys
+api-config.json
+
+# Secrets and credentials
+.secrets/
+*.pem
+*.key
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Ngrok binary and archive
+ngrok
+ngrok-*.tgz
+
+# Keep directory structure but ignore contents
+!cookies/.gitkeep
+!sessions/.gitkeep
+!cache/.gitkeep
+!screenshots/.gitkeep
+!downloads/.gitkeep

@@ -1,0 +1,105 @@
+{
+  "config": {
+    "environment": "development",
+    "version": "1.0.0",
+    "server": {
+      "port": 3000,
+      "host": "localhost",
+      "timeout": 60000,
+      "maxConnections": 50,
+      "enableCors": true
+    },
+    "orchestrator": {
+      "headless": false,
+      "timeout": 60000,
+      "maxConcurrent": 3,
+      "retryAttempts": 2,
+      "retryDelay": 500,
+      "enableCache": true,
+      "cacheMaxSize": 50,
+      "cacheTTL": 1800
+    },
+    "api": {
+      "rateLimit": {
+        "enabled": false,
+        "maxRequests": 50,
+        "windowMs": 60000
+      },
+      "timeout": 30000,
+      "maxRetries": 2
+    },
+    "security": {
+      "enableEncryption": false,
+      "encryptionAlgorithm": "aes-256-gcm",
+      "enableAuditLog": false,
+      "secretRotationDays": 180,
+      "allowedOrigins": [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000"
+      ]
+    },
+    "logging": {
+      "level": "debug",
+      "format": "simple",
+      "enableConsole": true,
+      "enableFile": true,
+      "filePath": "./logs/dev.log",
+      "maxFileSize": 5,
+      "maxFiles": 3
+    },
+    "monitoring": {
+      "enabled": true,
+      "healthCheckInterval": 60000,
+      "metricsInterval": 120000,
+      "alertThresholds": {
+        "cpuPercent": 90,
+        "memoryPercent": 90,
+        "errorRate": 0.1
+      }
+    },
+    "featureFlags": {
+      "ultraParallelExecution": {
+        "enabled": true,
+        "rolloutPercentage": 100,
+        "enabledUsers": []
+      },
+      "apiPoweredMode": {
+        "enabled": true,
+        "rolloutPercentage": 100,
+        "enabledUsers": []
+      },
+      "advancedErrorRecovery": {
+        "enabled": true,
+        "rolloutPercentage": 100,
+        "enabledUsers": []
+      },
+      "contentFormatting": {
+        "enabled": true,
+        "rolloutPercentage": 100,
+        "enabledUsers": []
+      },
+      "healthMonitoring": {
+        "enabled": true,
+        "rolloutPercentage": 100,
+        "enabledUsers": []
+      },
+      "experimentalFeature": {
+        "enabled": true,
+        "rolloutPercentage": 50,
+        "enabledUsers": [
+          "dev-user-1",
+          "dev-user-2"
+        ]
+      }
+    }
+  },
+  "metadata": {
+    "loadedAt": null,
+    "environment": "development",
+    "version": "1.0.0",
+    "lastReload": "2025-10-20T22:33:43.927Z",
+    "reloadCount": 1
+  },
+  "timestamp": "2025-10-20T22:33:43.927Z"
+}

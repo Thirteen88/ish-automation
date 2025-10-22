@@ -1,0 +1,553 @@
+{
+  "platforms": {
+    "lmarena": {
+      "name": "LMArena (LMSys)",
+      "url": "https://lmarena.ai/?mode=direct",
+      "tested": true,
+      "accessible": false,
+      "selectors": {},
+      "timing": {},
+      "issues": [],
+      "recommendations": [],
+      "error": "page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://lmarena.ai/?mode=direct\", waiting until \"networkidle\"\u001b[22m\n",
+      "success": false,
+      "errorScreenshot": "test-results/screenshots/lmarena_error.png"
+    },
+    "huggingface": {
+      "name": "HuggingChat",
+      "url": "https://huggingface.co/chat",
+      "tested": true,
+      "accessible": true,
+      "selectors": {
+        "promptInput": {
+          "selectorType": "promptInput",
+          "totalSelectors": 5,
+          "testedSelectors": [
+            {
+              "selector": "textarea[placeholder*='Ask anything']",
+              "index": 0,
+              "found": true,
+              "visible": true,
+              "timing": 34
+            },
+            {
+              "selector": "textarea.scroll-p-3",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea.scroll-p-3')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "textarea[rows]",
+              "index": 2,
+              "found": true,
+              "visible": true,
+              "timing": 7
+            },
+            {
+              "selector": "form textarea",
+              "index": 3,
+              "found": true,
+              "visible": true,
+              "timing": 7
+            },
+            {
+              "selector": "textarea",
+              "index": 4,
+              "found": true,
+              "visible": true,
+              "timing": 6
+            }
+          ],
+          "found": true,
+          "foundSelector": "textarea[placeholder*='Ask anything']",
+          "foundIndex": 0,
+          "timing": {
+            "firstMatch": 34
+          }
+        },
+        "submitButton": {
+          "selectorType": "submitButton",
+          "totalSelectors": 4,
+          "testedSelectors": [
+            {
+              "selector": "button[type='submit']",
+              "index": 0,
+              "found": true,
+              "visible": true,
+              "timing": 7
+            },
+            {
+              "selector": "button:has(svg)",
+              "index": 1,
+              "found": true,
+              "visible": false,
+              "timing": 7
+            },
+            {
+              "selector": "button:has-text('Submit')",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'Submit\\')')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "form button[type='submit']",
+              "index": 3,
+              "found": true,
+              "visible": true,
+              "timing": 7
+            }
+          ],
+          "found": true,
+          "foundSelector": "button[type='submit']",
+          "foundIndex": 0,
+          "timing": {
+            "firstMatch": 7
+          }
+        },
+        "responseContainer": {
+          "selectorType": "responseContainer",
+          "totalSelectors": 4,
+          "testedSelectors": [
+            {
+              "selector": "div.prose",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div.prose')\u001b[22m\n",
+              "timing": 5002
+            },
+            {
+              "selector": "div[class*='message']",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[class*=\\'message\\']')\u001b[22m\n",
+              "timing": 5000
+            },
+            {
+              "selector": "div.max-w-3xl",
+              "index": 2,
+              "found": true,
+              "visible": true,
+              "timing": 6
+            },
+            {
+              "selector": "main div[class*='prose']",
+              "index": 3,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main div[class*=\\'prose\\']')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": true,
+          "foundSelector": "div.max-w-3xl",
+          "foundIndex": 2,
+          "timing": {
+            "firstMatch": 6
+          }
+        },
+        "streamingIndicator": {
+          "selectorType": "streamingIndicator",
+          "totalSelectors": 3,
+          "testedSelectors": [
+            {
+              "selector": "div.animate-pulse",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div.animate-pulse')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "div[class*='loading']",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[class*=\\'loading\\']')\u001b[22m\n",
+              "timing": 5002
+            },
+            {
+              "selector": "svg.animate-spin",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('svg.animate-spin')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        },
+        "errorMessage": {
+          "selectorType": "errorMessage",
+          "totalSelectors": 3,
+          "testedSelectors": [
+            {
+              "selector": "div.bg-red-50",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div.bg-red-50')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "div[role='alert']",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[role=\\'alert\\']')\u001b[22m\n",
+              "timing": 5000
+            },
+            {
+              "selector": "div[class*='error']",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[class*=\\'error\\']')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        },
+        "newChatButton": {
+          "selectorType": "newChatButton",
+          "totalSelectors": 3,
+          "testedSelectors": [
+            {
+              "selector": "a:has-text('New Chat')",
+              "index": 0,
+              "found": true,
+              "visible": false,
+              "timing": 7
+            },
+            {
+              "selector": "button:has-text('New Chat')",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'New Chat\\')')\u001b[22m\n",
+              "timing": 5000
+            },
+            {
+              "selector": "a[href='/chat']",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href=\\'/chat\\']')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": true,
+          "foundSelector": "a:has-text('New Chat')",
+          "foundIndex": 0,
+          "timing": {
+            "firstMatch": 7
+          }
+        },
+        "acceptTermsButton": {
+          "selectorType": "acceptTermsButton",
+          "totalSelectors": 3,
+          "testedSelectors": [
+            {
+              "selector": "button:has-text('Accept')",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'Accept\\')')\u001b[22m\n",
+              "timing": 5002
+            },
+            {
+              "selector": "button:has-text('I agree')",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'I agree\\')')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "button:has-text('Continue')",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'Continue\\')')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        }
+      },
+      "timing": {
+        "navigation": 440
+      },
+      "issues": [
+        "Missing streamingIndicator",
+        "Missing errorMessage",
+        "Missing acceptTermsButton"
+      ],
+      "recommendations": [
+        {
+          "type": "selectors",
+          "priority": "high",
+          "message": "Update selectors for: streamingIndicator, errorMessage, acceptTermsButton",
+          "action": "Use discover-selectors.js to find working selectors"
+        }
+      ],
+      "screenshot": "test-results/screenshots/huggingface_initial.png",
+      "success": true
+    },
+    "perplexity": {
+      "name": "Perplexity AI",
+      "url": "https://www.perplexity.ai",
+      "tested": true,
+      "accessible": true,
+      "selectors": {
+        "promptInput": {
+          "selectorType": "promptInput",
+          "totalSelectors": 5,
+          "testedSelectors": [
+            {
+              "selector": "textarea[placeholder*='Ask anything']",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea[placeholder*=\\'Ask anything\\']')\u001b[22m\n",
+              "timing": 5000
+            },
+            {
+              "selector": "textarea[placeholder*='Ask follow-up']",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea[placeholder*=\\'Ask follow-up\\']')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "textarea.ProseMirror",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea.ProseMirror')\u001b[22m\n",
+              "timing": 5000
+            },
+            {
+              "selector": "div[contenteditable='true']",
+              "index": 3,
+              "found": true,
+              "visible": true,
+              "timing": 24
+            },
+            {
+              "selector": "textarea",
+              "index": 4,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('textarea')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": true,
+          "foundSelector": "div[contenteditable='true']",
+          "foundIndex": 3,
+          "timing": {
+            "firstMatch": 24
+          }
+        },
+        "submitButton": {
+          "selectorType": "submitButton",
+          "totalSelectors": 3,
+          "testedSelectors": [
+            {
+              "selector": "button[aria-label='Submit']",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[aria-label=\\'Submit\\']')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "button:has(svg[class*='arrow'])",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has(svg[class*=\\'arrow\\'])')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "button[type='submit']",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[type=\\'submit\\']')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        },
+        "responseContainer": {
+          "selectorType": "responseContainer",
+          "totalSelectors": 3,
+          "testedSelectors": [
+            {
+              "selector": "div[class*='answer']",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[class*=\\'answer\\']')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "div.prose",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div.prose')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "div[class*='response']",
+              "index": 2,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[class*=\\'response\\']')\u001b[22m\n",
+              "timing": 5000
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        },
+        "streamingIndicator": {
+          "selectorType": "streamingIndicator",
+          "totalSelectors": 2,
+          "testedSelectors": [
+            {
+              "selector": "div[class*='typing']",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[class*=\\'typing\\']')\u001b[22m\n",
+              "timing": 5002
+            },
+            {
+              "selector": "div.animate-pulse",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div.animate-pulse')\u001b[22m\n",
+              "timing": 5001
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        },
+        "errorMessage": {
+          "selectorType": "errorMessage",
+          "totalSelectors": 2,
+          "testedSelectors": [
+            {
+              "selector": "div[role='alert']",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[role=\\'alert\\']')\u001b[22m\n",
+              "timing": 5001
+            },
+            {
+              "selector": "div[class*='error']",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('div[class*=\\'error\\']')\u001b[22m\n",
+              "timing": 5002
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        },
+        "newChatButton": {
+          "selectorType": "newChatButton",
+          "totalSelectors": 2,
+          "testedSelectors": [
+            {
+              "selector": "button:has-text('New')",
+              "index": 0,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\\'New\\')')\u001b[22m\n",
+              "timing": 5000
+            },
+            {
+              "selector": "a:has-text('New Thread')",
+              "index": 1,
+              "found": false,
+              "visible": false,
+              "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a:has-text(\\'New Thread\\')')\u001b[22m\n",
+              "timing": 5000
+            }
+          ],
+          "found": false,
+          "foundSelector": null,
+          "foundIndex": -1,
+          "timing": {}
+        }
+      },
+      "timing": {
+        "navigation": 630
+      },
+      "issues": [
+        "Missing submitButton",
+        "Missing responseContainer",
+        "Missing streamingIndicator",
+        "Missing errorMessage",
+        "Missing newChatButton"
+      ],
+      "recommendations": [
+        {
+          "type": "selectors",
+          "priority": "high",
+          "message": "Update selectors for: submitButton, responseContainer, streamingIndicator, errorMessage, newChatButton",
+          "action": "Use discover-selectors.js to find working selectors"
+        },
+        {
+          "type": "optimization",
+          "priority": "medium",
+          "message": "promptInput selector found at position 4",
+          "action": "Move working selector to position 1 for better performance"
+        }
+      ],
+      "screenshot": "test-results/screenshots/perplexity_initial.png",
+      "success": false
+    }
+  },
+  "summary": {
+    "totalPlatforms": 3,
+    "testedPlatforms": 3,
+    "successfulPlatforms": 1,
+    "failedPlatforms": 2,
+    "totalSelectors": 42,
+    "workingSelectors": 5,
+    "failedSelectors": 8
+  },
+  "timestamp": "2025-10-21T20:15:38.602Z"
+}

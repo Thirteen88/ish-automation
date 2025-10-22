@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Responses - Side Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .header .subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid #ddd;
+      padding: 0 16px;
+    }
+
+    .tab {
+      padding: 12px 20px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: #667eea;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Active Queries */
+    .query-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .query-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+
+    .query-prompt {
+      flex: 1;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .query-meta {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+    }
+
+    .query-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: #f5f5f5;
+      border-color: #999;
+    }
+
+    .responses-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .response-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    .response-card:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .response-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: #fafafa;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .platform-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .response-status {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .response-status.processing {
+      background: #FFF3E0;
+      color: #F57C00;
+    }
+
+    .response-status.complete {
+      background: #E8F5E9;
+      color: #2E7D32;
+    }
+
+    .response-status.error {
+      background: #FFEBEE;
+      color: #C62828;
+    }
+
+    .response-body {
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .response-body.expanded {
+      max-height: none;
+    }
+
+    .response-footer {
+      padding: 12px 16px;
+      background: #fafafa;
+      border-top: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .response-duration {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .response-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .vote-btn {
+      background: transparent;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .vote-btn:hover {
+      background: #f5f5f5;
+    }
+
+    .vote-btn.voted {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .expand-btn {
+      color: #667eea;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 8px;
+      display: inline-block;
+    }
+
+    .expand-btn:hover {
+      text-decoration: underline;
+    }
+
+    .loading-spinner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #666;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+    }
+
+    /* Comparison View */
+    .comparison-view {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    /* History View */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .history-item {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid #ddd;
+    }
+
+    .history-item:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .history-prompt {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-meta {
+      font-size: 12px;
+      color: #666;
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Export Options */
+    .export-options {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .export-btn {
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .export-btn:hover {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>AI Responses</h1>
+    <div class="subtitle">Compare responses from multiple platforms</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="active">Active Queries</div>
+    <div class="tab" data-tab="comparison">Comparison</div>
+    <div class="tab" data-tab="history">History</div>
+  </div>
+
+  <div class="content">
+    <!-- Active Queries Tab -->
+    <div class="tab-content active" id="active-tab">
+      <div id="active-queries">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+          <h3>No Active Queries</h3>
+          <p>Submit a query from the popup or right-click selected text</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison Tab -->
+    <div class="tab-content" id="comparison-tab">
+      <div class="comparison-view">
+        <h3>Response Comparison</h3>
+        <p style="color: #666; font-size: 14px; margin-top: 8px;">
+          Select a query to compare responses side-by-side
+        </p>
+        <div class="comparison-grid" id="comparison-grid"></div>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div class="tab-content" id="history-tab">
+      <div class="history-list" id="history-list">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M3 21v-5h5"/>
+          </svg>
+          <h3>No Query History</h3>
+          <p>Your query history will appear here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

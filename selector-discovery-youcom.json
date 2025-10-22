@@ -1,0 +1,34 @@
+{
+  "platformName": "youcom",
+  "url": "https://you.com",
+  "timestamp": "2025-10-21T20:35:01.097Z",
+  "selectors": {
+    "promptInput": [],
+    "submitButton": [],
+    "responseContainer": [
+      "div.nav2_button_line.is-bot",
+      "div.footer2_bot.u-grid-custom",
+      "div.is-bot",
+      "div.footer2_bot",
+      "div.nav2_button_line"
+    ],
+    "streamingIndicator": [
+      "div.esolutions_tab_btn_progress_wrap",
+      "div.esolutions_tab_btn_progress_fill",
+      "div",
+      "div"
+    ],
+    "errorMessage": [],
+    "modelSelector": [
+      "div.page_wrap",
+      "div"
+    ],
+    "newChatButton": [],
+    "clearButton": [],
+    "loginRequired": [
+      "#dropdown_toggle_3",
+      "[aria-label=\"Sign In\"]",
+      "button[aria-label=\"Sign In\"]"
+    ]
+  }
+}

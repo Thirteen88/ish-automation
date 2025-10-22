@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2025-10-20T18:50:17.848Z",
+    "prompt": "Provide tips for managing presentation anxiety",
+    "context": {
+      "event": "important-presentation"
+    },
+    "model": "gpt-4"
+  }
+]

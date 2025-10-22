@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": "2025-10-20T16:34:50.189Z",
+    "prompt": "Create a productivity plan for today with time blocks for deep work, meetings, and breaks",
+    "context": {
+      "currentTime": "2025-10-20T16:34:50.188Z"
+    },
+    "model": "claude-3-opus"
+  },
+  {
+    "timestamp": "2025-10-20T16:34:50.190Z",
+    "prompt": "Create a preparation strategy for an important presentation",
+    "context": {
+      "deadline": "tomorrow"
+    },
+    "model": "claude-3-opus"
+  }
+]

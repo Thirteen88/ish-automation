@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ish-api-config
+  namespace: ish-automation
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  ENABLE_CACHE: "true"
+  MAX_CONCURRENT_REQUESTS: "10"
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "100"
+  CACHE_TTL: "300"
+  CACHE_MAX_SIZE: "1000"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ish-web-config
+  namespace: ish-automation
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ish-api-secrets
+  namespace: ish-automation
+type: Opaque
+stringData:
+  # Replace these with actual secrets in production
+  # Use: kubectl create secret generic ish-api-secrets --from-env-file=.env
+  OPENAI_API_KEY: "sk-changeme"
+  ANTHROPIC_API_KEY: "sk-ant-changeme"
+  GOOGLE_API_KEY: "changeme"
+  REPLICATE_API_KEY: "r8_changeme"
+  TOGETHER_API_KEY: "changeme"
+  POSTGRES_PASSWORD: "changeme"
+  REDIS_PASSWORD: "changeme"
+  API_KEYS: "changeme-key-1,changeme-key-2"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ish-postgres-secret
+  namespace: ish-automation
+type: Opaque
+stringData:
+  POSTGRES_DB: "ish_automation"
+  POSTGRES_USER: "ish_user"
+  POSTGRES_PASSWORD: "changeme"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ish-redis-secret
+  namespace: ish-automation
+type: Opaque
+stringData:
+  REDIS_PASSWORD: "changeme"

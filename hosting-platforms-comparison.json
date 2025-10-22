@@ -1,0 +1,191 @@
+{
+  "query": "find me free developer hosting platforms",
+  "timestamp": "2025-10-20T19:15:34.252Z",
+  "results": [
+    {
+      "model": "claude-3-opus",
+      "provider": "Anthropic",
+      "duration": "2.69",
+      "response": {
+        "platforms": [
+          {
+            "name": "Vercel",
+            "url": "https://vercel.com",
+            "description": "Excellent for Next.js and React apps, generous free tier"
+          },
+          {
+            "name": "Netlify",
+            "url": "https://netlify.com",
+            "description": "Great for static sites and JAMstack, automatic deployments"
+          },
+          {
+            "name": "GitHub Pages",
+            "url": "https://pages.github.com",
+            "description": "Perfect for static sites, integrated with GitHub repos"
+          },
+          {
+            "name": "Railway",
+            "url": "https://railway.app",
+            "description": "Modern platform for full-stack apps, $5 free credit monthly"
+          },
+          {
+            "name": "Render",
+            "url": "https://render.com",
+            "description": "Free tier for web services, automatic deploys from Git"
+          }
+        ],
+        "comparison": "Vercel leads for Next.js projects, while Netlify excels at static sites. GitHub Pages is ideal for documentation and portfolios.",
+        "recommendation": "For modern web apps, start with Vercel or Railway. For static sites, GitHub Pages offers the best simplicity."
+      },
+      "timestamp": "2025-10-20T19:15:34.059Z"
+    },
+    {
+      "model": "claude-3-sonnet",
+      "provider": "Anthropic",
+      "duration": "2.85",
+      "response": {
+        "platforms": [
+          {
+            "name": "Vercel",
+            "url": "https://vercel.com",
+            "description": "Optimized for frontend frameworks, serverless functions included"
+          },
+          {
+            "name": "Heroku",
+            "url": "https://heroku.com",
+            "description": "Limited free tier, good for prototypes and learning"
+          },
+          {
+            "name": "Fly.io",
+            "url": "https://fly.io",
+            "description": "Global edge hosting, generous free allowances"
+          },
+          {
+            "name": "Replit",
+            "url": "https://replit.com",
+            "description": "Browser-based IDE with instant hosting"
+          },
+          {
+            "name": "Glitch",
+            "url": "https://glitch.com",
+            "description": "Collaborative coding with instant hosting"
+          }
+        ],
+        "comparison": "Fly.io offers the best performance globally. Replit provides the easiest setup with zero configuration.",
+        "recommendation": "Technical users should choose Fly.io, beginners should start with Replit or Glitch."
+      },
+      "timestamp": "2025-10-20T19:15:34.215Z"
+    },
+    {
+      "model": "gpt-4",
+      "provider": "OpenAI",
+      "duration": "2.52",
+      "response": {
+        "platforms": [
+          {
+            "name": "Netlify",
+            "url": "https://www.netlify.com",
+            "description": "Comprehensive free tier with 100GB bandwidth"
+          },
+          {
+            "name": "Vercel",
+            "url": "https://vercel.com",
+            "description": "Automatic SSL, global CDN, great DX"
+          },
+          {
+            "name": "Surge.sh",
+            "url": "https://surge.sh",
+            "description": "Simple CLI deployment for static sites"
+          },
+          {
+            "name": "Firebase Hosting",
+            "url": "https://firebase.google.com/products/hosting",
+            "description": "Google's platform with 10GB storage free"
+          },
+          {
+            "name": "Cloudflare Pages",
+            "url": "https://pages.cloudflare.com",
+            "description": "Unlimited bandwidth, fast global network"
+          }
+        ],
+        "comparison": "Cloudflare Pages offers unlimited bandwidth. Firebase integrates well with other Google services. Surge.sh is the simplest.",
+        "recommendation": "Choose Cloudflare Pages for performance, Firebase for full-stack apps, or Surge.sh for quick deployments."
+      },
+      "timestamp": "2025-10-20T19:15:33.886Z"
+    },
+    {
+      "model": "gpt-4-turbo",
+      "provider": "OpenAI",
+      "duration": "2.86",
+      "response": {
+        "platforms": [
+          {
+            "name": "GitHub Pages",
+            "url": "https://pages.github.com",
+            "description": "Free for public repos, custom domains supported"
+          },
+          {
+            "name": "GitLab Pages",
+            "url": "https://docs.gitlab.com/ee/user/project/pages/",
+            "description": "Similar to GitHub Pages with CI/CD"
+          },
+          {
+            "name": "Deta Space",
+            "url": "https://deta.space",
+            "description": "Personal cloud computer, unique approach"
+          },
+          {
+            "name": "Cyclic",
+            "url": "https://cyclic.sh",
+            "description": "Full-stack apps with no cold starts"
+          },
+          {
+            "name": "Supabase",
+            "url": "https://supabase.com",
+            "description": "Backend-as-a-service with hosting options"
+          }
+        ],
+        "comparison": "Cyclic eliminates cold starts. Deta Space offers a unique personal cloud model. Supabase excels for database-driven apps.",
+        "recommendation": "For APIs choose Cyclic, for full-stack apps with databases use Supabase, for experiments try Deta Space."
+      },
+      "timestamp": "2025-10-20T19:15:34.230Z"
+    },
+    {
+      "model": "gemini-pro",
+      "provider": "Google",
+      "duration": "2.30",
+      "response": {
+        "platforms": [
+          {
+            "name": "AWS Free Tier",
+            "url": "https://aws.amazon.com/free",
+            "description": "12 months free with limits, most comprehensive"
+          },
+          {
+            "name": "Google Cloud Free",
+            "url": "https://cloud.google.com/free",
+            "description": "$300 credit plus always-free products"
+          },
+          {
+            "name": "Azure Free",
+            "url": "https://azure.microsoft.com/free",
+            "description": "$200 credit for 30 days plus free services"
+          },
+          {
+            "name": "Oracle Cloud Free",
+            "url": "https://oracle.com/cloud/free",
+            "description": "Generous always-free tier, 2 VMs included"
+          },
+          {
+            "name": "DigitalOcean",
+            "url": "https://digitalocean.com",
+            "description": "$200 credit for 60 days on signup"
+          }
+        ],
+        "comparison": "Oracle Cloud has the most generous always-free tier. AWS offers the most services. Google Cloud is best for AI/ML projects.",
+        "recommendation": "Start with Oracle Cloud for always-free resources, or AWS/GCP for learning enterprise platforms."
+      },
+      "timestamp": "2025-10-20T19:15:33.666Z"
+    }
+  ]
+}

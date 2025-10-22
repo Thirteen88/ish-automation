@@ -1,0 +1,8 @@
+logs/
+node_modules/
+.env
+*.log
+*.csv
+.DS_Store
+data/
+analytics.db

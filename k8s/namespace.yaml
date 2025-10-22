@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ish-automation
+  labels:
+    name: ish-automation
+    environment: production
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ish-api
+  namespace: ish-automation
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ish-web
+  namespace: ish-automation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ish-api-role
+  namespace: ish-automation
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ish-api-rolebinding
+  namespace: ish-automation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ish-api-role
+subjects:
+- kind: ServiceAccount
+  name: ish-api
+  namespace: ish-automation

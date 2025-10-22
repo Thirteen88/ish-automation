@@ -1,0 +1,42 @@
+{
+  "platformName": "duckduckgo",
+  "url": "https://duckduckgo.com/?q=DuckDuckGo&ia=chat",
+  "timestamp": "2025-10-21T20:37:38.957Z",
+  "selectors": {
+    "promptInput": [
+      "textarea[placeholder=\"Ask privately\"]",
+      "textarea[placeholder*=\"Ask privately\"]",
+      "textarea[name=\"user-prompt\"]",
+      "textarea.JRDRiEf5NPKWK43sArdC",
+      "textarea"
+    ],
+    "submitButton": [
+      "[aria-label=\"Send\"]",
+      "button[aria-label=\"Send\"]",
+      "button[aria-label*=\"Send\"]",
+      "button.OBhZtIxa9q5aVP29xT9j.bcF7UYQxk12e5XSCQKVx.uuIDnYC4qmyFk5dsXOhr",
+      "button.OBhZtIxa9q5aVP29xT9j"
+    ],
+    "responseContainer": [
+      "div.serp__bottom-right.js-serp-bottom-right",
+      "div.serp__bottom-right",
+      "div.js-serp-bottom-right",
+      "div[class*=\"serp__bottom\"]",
+      "div"
+    ],
+    "streamingIndicator": [],
+    "errorMessage": [],
+    "modelSelector": [],
+    "newChatButton": [
+      "[aria-label=\"clear\"]",
+      "[aria-label=\"Clear chat\"]",
+      "button[aria-label=\"clear\"]"
+    ],
+    "clearButton": [
+      "[aria-label=\"clear\"]",
+      "[aria-label=\"Clear chat\"]",
+      "button[aria-label=\"clear\"]"
+    ],
+    "loginRequired": []
+  }
+}

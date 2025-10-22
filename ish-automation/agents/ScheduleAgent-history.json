@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2025-10-20T18:50:17.848Z",
+    "prompt": "Block time for presentation preparation",
+    "context": {
+      "available": "4 hours today"
+    },
+    "model": "gpt-4"
+  }
+]

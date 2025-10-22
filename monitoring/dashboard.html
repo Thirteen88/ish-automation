@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISH Automation - Monitoring Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e74c3c;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #2ecc71;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .metric-value.good {
+            color: #2ecc71;
+        }
+
+        .metric-value.warning {
+            color: #f39c12;
+        }
+
+        .metric-value.danger {
+            color: #e74c3c;
+        }
+
+        .platform-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .platform {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #ccc;
+        }
+
+        .platform.healthy {
+            border-left-color: #2ecc71;
+        }
+
+        .platform.degraded {
+            border-left-color: #f39c12;
+        }
+
+        .platform.unhealthy {
+            border-left-color: #e74c3c;
+        }
+
+        .platform-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+
+        .platform-metric {
+            font-size: 12px;
+            color: #666;
+            margin: 4px 0;
+        }
+
+        .alert-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .alert {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ccc;
+        }
+
+        .alert.info {
+            border-left-color: #3498db;
+        }
+
+        .alert.warning {
+            border-left-color: #f39c12;
+        }
+
+        .alert.critical {
+            border-left-color: #e74c3c;
+        }
+
+        .alert.fatal {
+            border-left-color: #8e44ad;
+            background: #f9e6f0;
+        }
+
+        .alert-severity {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .alert-message {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .alert-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .chart-container {
+            height: 200px;
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #2ecc71;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.warning {
+            background: #f39c12;
+        }
+
+        .progress-fill.danger {
+            background: #e74c3c;
+        }
+
+        .log-viewer {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .log-timestamp {
+            color: #858585;
+        }
+
+        .log-level {
+            font-weight: bold;
+        }
+
+        .log-level.error {
+            color: #f48771;
+        }
+
+        .log-level.warn {
+            color: #dcdcaa;
+        }
+
+        .log-level.info {
+            color: #4ec9b0;
+        }
+
+        .log-level.debug {
+            color: #569cd6;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #999;
+            text-align: right;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .mini-chart {
+            display: flex;
+            align-items: flex-end;
+            height: 40px;
+            gap: 2px;
+        }
+
+        .mini-chart-bar {
+            flex: 1;
+            background: #667eea;
+            opacity: 0.6;
+            transition: all 0.3s;
+        }
+
+        .mini-chart-bar:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ISH Automation - Monitoring Dashboard</h1>
+            <div class="connection-status">
+                <div class="status-dot" id="connectionStatus"></div>
+                <span id="connectionText">Connecting...</span>
+            </div>
+        </div>
+
+        <!-- Overview Metrics -->
+        <div class="grid">
+            <div class="card">
+                <h2>System Overview</h2>
+                <div class="metric">
+                    <span class="metric-label">Total Queries</span>
+                    <span class="metric-value" id="totalQueries">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Success Rate</span>
+                    <span class="metric-value good" id="successRate">0%</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Avg Response Time</span>
+                    <span class="metric-value" id="avgResponseTime">0ms</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Active Connections</span>
+                    <span class="metric-value" id="activeConnections">0</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>System Resources</h2>
+                <div class="metric">
+                    <div style="flex: 1;">
+                        <span class="metric-label">Memory Usage</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="memoryProgress"></div>
+                        </div>
+                    </div>
+                    <span class="metric-value" id="memoryUsage">0%</span>
+                </div>
+                <div class="metric">
+                    <div style="flex: 1;">
+                        <span class="metric-label">CPU Usage</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="cpuProgress"></div>
+                        </div>
+                    </div>
+                    <span class="metric-value" id="cpuUsage">0%</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Queue Size</span>
+                    <span class="metric-value" id="queueSize">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Uptime</span>
+                    <span class="metric-value" id="uptime">0s</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Performance Trends</h2>
+                <div id="responseTrend" class="mini-chart"></div>
+                <div class="metric">
+                    <span class="metric-label">P95 Response Time</span>
+                    <span class="metric-value" id="p95ResponseTime">0ms</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">P99 Response Time</span>
+                    <span class="metric-value" id="p99ResponseTime">0ms</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Status -->
+        <div class="card full-width">
+            <h2>Platform Health Status</h2>
+            <div class="platform-status" id="platformStatus">
+                <!-- Platforms will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Alerts and Logs -->
+        <div class="grid">
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>Active Alerts</h2>
+                <div class="alert-list" id="alertList">
+                    <div style="text-align: center; color: #999; padding: 20px;">
+                        No active alerts
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>Live Logs</h2>
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('all')">All</button>
+                    <button class="tab" onclick="switchTab('errors')">Errors</button>
+                    <button class="tab" onclick="switchTab('queries')">Queries</button>
+                    <button class="tab" onclick="switchTab('health')">Health</button>
+                </div>
+                <div class="log-viewer" id="logViewer">
+                    <!-- Logs will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="timestamp" id="lastUpdate">
+            Last updated: Never
+        </div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        let ws = null;
+        let reconnectTimeout = null;
+        let currentTab = 'all';
+        let logs = [];
+        let alerts = [];
+        let metrics = {
+            responseTimes: []
+        };
+
+        // Initialize WebSocket connection
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                document.getElementById('connectionStatus').classList.add('connected');
+                document.getElementById('connectionText').textContent = 'Connected';
+                clearTimeout(reconnectTimeout);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleMessage(data);
+                } catch (error) {
+                    console.error('Failed to parse message:', error);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                document.getElementById('connectionStatus').classList.remove('connected');
+                document.getElementById('connectionText').textContent = 'Disconnected';
+
+                // Attempt reconnection
+                reconnectTimeout = setTimeout(connect, 5000);
+            };
+        }
+
+        // Handle WebSocket messages
+        function handleMessage(data) {
+            switch (data.type) {
+                case 'connected':
+                    handleConnected(data.data);
+                    break;
+                case 'metric':
+                    handleMetric(data.data);
+                    break;
+                case 'alert':
+                    handleAlert(data.data);
+                    break;
+                case 'log':
+                    handleLog(data.data);
+                    break;
+                case 'platform-status':
+                    handlePlatformStatus(data.data);
+                    break;
+                case 'stats':
+                    handleStats(data.data);
+                    break;
+            }
+
+            updateLastUpdate();
+        }
+
+        // Handle initial connection
+        function handleConnected(data) {
+            console.log('Connected to monitoring system');
+            if (data.platformStatus) {
+                updatePlatformStatus(data.platformStatus);
+            }
+        }
+
+        // Handle metrics update
+        function handleMetric(data) {
+            // Store response times for trends
+            if (data.avgResponseTime) {
+                metrics.responseTimes.push(data.avgResponseTime);
+                if (metrics.responseTimes.length > 20) {
+                    metrics.responseTimes.shift();
+                }
+                updateResponseTrend();
+            }
+        }
+
+        // Handle alert
+        function handleAlert(data) {
+            alerts.unshift(data);
+            if (alerts.length > 50) {
+                alerts.pop();
+            }
+            updateAlerts();
+        }
+
+        // Handle log entry
+        function handleLog(data) {
+            logs.unshift(data);
+            if (logs.length > 100) {
+                logs.pop();
+            }
+            updateLogs();
+        }
+
+        // Handle platform status
+        function handlePlatformStatus(data) {
+            updatePlatformStatus([data]);
+        }
+
+        // Handle statistics update
+        function handleStats(data) {
+            updateStats(data);
+        }
+
+        // Update statistics
+        function updateStats(stats) {
+            document.getElementById('totalQueries').textContent = stats.totalQueries || 0;
+
+            const successRate = stats.successRate || 0;
+            const successEl = document.getElementById('successRate');
+            successEl.textContent = successRate.toFixed(1) + '%';
+            successEl.className = 'metric-value ' + (successRate >= 95 ? 'good' : successRate >= 80 ? 'warning' : 'danger');
+
+            document.getElementById('avgResponseTime').textContent = Math.round(stats.avgResponseTime || 0) + 'ms';
+            document.getElementById('activeConnections').textContent = stats.websocketConnections || 0;
+
+            // Memory usage
+            if (stats.memoryUsage) {
+                const memPercent = (stats.memoryUsage.heapUsed / stats.memoryUsage.heapTotal) * 100;
+                updateProgress('memoryProgress', 'memoryUsage', memPercent);
+            }
+
+            // CPU usage
+            if (stats.cpuUsage !== undefined) {
+                updateProgress('cpuProgress', 'cpuUsage', stats.cpuUsage);
+            }
+
+            document.getElementById('queueSize').textContent = stats.queueSize || 0;
+            document.getElementById('p95ResponseTime').textContent = Math.round(stats.p95ResponseTime || 0) + 'ms';
+            document.getElementById('p99ResponseTime').textContent = Math.round(stats.p99ResponseTime || 0) + 'ms';
+        }
+
+        // Update progress bar
+        function updateProgress(barId, valueId, percent) {
+            const bar = document.getElementById(barId);
+            const value = document.getElementById(valueId);
+
+            bar.style.width = percent + '%';
+            bar.className = 'progress-fill ' + (percent >= 80 ? 'danger' : percent >= 60 ? 'warning' : '');
+
+            value.textContent = percent.toFixed(1) + '%';
+            value.className = 'metric-value ' + (percent >= 80 ? 'danger' : percent >= 60 ? 'warning' : 'good');
+        }
+
+        // Update platform status
+        function updatePlatformStatus(platforms) {
+            const container = document.getElementById('platformStatus');
+            container.innerHTML = '';
+
+            for (const [platform, status] of platforms) {
+                const div = document.createElement('div');
+                div.className = `platform ${status.status}`;
+                div.innerHTML = `
+                    <div class="platform-name">${platform}</div>
+                    <div class="platform-metric">Status: ${status.status}</div>
+                    <div class="platform-metric">Requests: ${status.requestCount || 0}</div>
+                    <div class="platform-metric">Errors: ${status.errorCount || 0}</div>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        // Update alerts
+        function updateAlerts() {
+            const container = document.getElementById('alertList');
+
+            if (alerts.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">No active alerts</div>';
+                return;
+            }
+
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert ${alert.severity}">
+                    <div class="alert-severity">${alert.severity}</div>
+                    <div class="alert-message">${alert.message}</div>
+                    <div class="alert-time">${new Date(alert.timestamp).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        // Update logs
+        function updateLogs() {
+            const container = document.getElementById('logViewer');
+            const filteredLogs = filterLogs(logs, currentTab);
+
+            if (filteredLogs.length === 0) {
+                container.innerHTML = '<div style="color: #858585;">No logs available</div>';
+                return;
+            }
+
+            container.innerHTML = filteredLogs.slice(0, 50).map(log => `
+                <div class="log-entry">
+                    <span class="log-timestamp">[${new Date(log.timestamp).toLocaleTimeString()}]</span>
+                    <span class="log-level ${log.level}">[${log.level.toUpperCase()}]</span>
+                    <span>${log.message}</span>
+                </div>
+            `).join('');
+        }
+
+        // Filter logs
+        function filterLogs(logs, tab) {
+            switch (tab) {
+                case 'errors':
+                    return logs.filter(log => log.level === 'error' || log.level === 'fatal');
+                case 'queries':
+                    return logs.filter(log => log.category === 'query');
+                case 'health':
+                    return logs.filter(log => log.category === 'health');
+                default:
+                    return logs;
+            }
+        }
+
+        // Switch tab
+        function switchTab(tab) {
+            currentTab = tab;
+
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+                if (t.textContent.toLowerCase().includes(tab)) {
+                    t.classList.add('active');
+                }
+            });
+
+            updateLogs();
+        }
+
+        // Update response time trend
+        function updateResponseTrend() {
+            const container = document.getElementById('responseTrend');
+            const times = metrics.responseTimes;
+
+            if (times.length === 0) return;
+
+            const max = Math.max(...times);
+
+            container.innerHTML = times.map(time => {
+                const height = (time / max) * 100;
+                return `<div class="mini-chart-bar" style="height: ${height}%" title="${time}ms"></div>`;
+            }).join('');
+        }
+
+        // Update last update timestamp
+        function updateLastUpdate() {
+            document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleString()}`;
+        }
+
+        // Fetch metrics periodically
+        async function fetchMetrics() {
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+
+                if (data.success) {
+                    handleStats(data.metrics);
+                }
+            } catch (error) {
+                console.error('Failed to fetch metrics:', error);
+            }
+        }
+
+        // Fetch platform status
+        async function fetchPlatformStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                if (data.success) {
+                    updatePlatformStatus(Object.entries(data.platforms));
+                }
+            } catch (error) {
+                console.error('Failed to fetch platform status:', error);
+            }
+        }
+
+        // Initialize
+        connect();
+        setInterval(fetchMetrics, 5000);
+        setInterval(fetchPlatformStatus, 10000);
+
+        // Initial fetch
+        fetchMetrics();
+        fetchPlatformStatus();
+    </script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Mobile PWA WebSocket</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        button {
+            background: #333;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        button:hover {
+            background: #444;
+        }
+        #log {
+            background: #000;
+            border: 1px solid #0f0;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+        .msg {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #0f0;
+        }
+        .error { border-left-color: #f00; color: #f00; }
+        .info { border-left-color: #00f; color: #0af; }
+        .success { border-left-color: #0f0; color: #0f0; }
+        .data { border-left-color: #ff0; color: #ff0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 WebSocket Debug Console</h1>
+
+    <div>
+        <button onclick="connect()">Connect WebSocket</button>
+        <button onclick="testQuery()">Send Test Query</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div id="log"></div>
+
+    <script>
+        let ws = null;
+        let queryId = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+            const msg = document.createElement('div');
+            msg.className = `msg ${type}`;
+            msg.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(msg);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                log('Already connected', 'info');
+                return;
+            }
+
+            log('Connecting to ws://localhost:3000...', 'info');
+            ws = new WebSocket('ws://localhost:3000');
+
+            ws.onopen = () => {
+                log('✅ WebSocket connected', 'success');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    log(`📨 Message: ${data.type}`, 'data');
+
+                    // Log the full message
+                    log(JSON.stringify(data, null, 2), 'data');
+
+                    // Handle specific message types
+                    switch(data.type) {
+                        case 'query-start':
+                            queryId = data.data.id;
+                            log(`🚀 Query started: ${queryId}`, 'success');
+                            break;
+                        case 'platform-start':
+                            log(`⚡ Platform ${data.data.platform} started`, 'info');
+                            break;
+                        case 'response-chunk':
+                            log(`📝 Chunk from ${data.data.platform}: ${data.data.chunk.substring(0, 50)}...`, 'data');
+                            break;
+                        case 'platform-complete':
+                            log(`✅ Platform ${data.data.platform} complete`, 'success');
+                            if (data.data.response) {
+                                log(`Response: ${JSON.stringify(data.data.response).substring(0, 100)}...`, 'data');
+                            }
+                            break;
+                        case 'platform-error':
+                            log(`❌ Platform ${data.data.platform} error: ${data.data.error}`, 'error');
+                            break;
+                        case 'query-complete':
+                            log(`🎉 Query complete!`, 'success');
+                            break;
+                    }
+                } catch (error) {
+                    log(`Error parsing message: ${error.message}`, 'error');
+                    log(`Raw message: ${event.data}`, 'error');
+                }
+            };
+
+            ws.onerror = (error) => {
+                log(`WebSocket error: ${error}`, 'error');
+            };
+
+            ws.onclose = () => {
+                log('WebSocket disconnected', 'info');
+            };
+        }
+
+        async function testQuery() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('Please connect WebSocket first', 'error');
+                return;
+            }
+
+            const prompt = 'What is 2+2? Just give me the number.';
+            const platforms = ['lmarena', 'claude', 'chatgpt', 'gemini', 'poe'];
+
+            log(`Sending query: "${prompt}"`, 'info');
+            log(`Platforms: ${platforms.join(', ')}`, 'info');
+
+            try {
+                const response = await fetch('http://localhost:3000/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, platforms })
+                });
+
+                const data = await response.json();
+                log(`API Response: ${JSON.stringify(data, null, 2)}`, 'success');
+            } catch (error) {
+                log(`API Error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('Log cleared', 'info');
+        }
+
+        // Auto-connect on load
+        setTimeout(connect, 500);
+    </script>
+</body>
+</html>

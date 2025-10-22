@@ -1,0 +1,255 @@
+{
+  "version": "2.0.0-reliable",
+  "lastUpdated": "2025-10-21",
+  "description": "Production-ready platform configurations. Only includes platforms with verified, working selectors and no authentication requirements.",
+
+  "productionStatus": {
+    "tested": "2025-10-21",
+    "workingPlatforms": 2,
+    "readyForDeployment": true,
+    "minimumRequirement": "At least 2 platforms must be working for production",
+    "status": "PRODUCTION READY"
+  },
+
+  "platforms": {
+    "duckduckgo": {
+      "name": "DuckDuckGo AI Chat",
+      "url": "https://duckduckgo.com/?q=DuckDuckGo&ia=chat",
+      "priority": 1,
+      "reliabilityScore": 95,
+      "features": {
+        "noAuthentication": true,
+        "noRateLimit": false,
+        "fastResponse": true,
+        "stableSelectors": true
+      },
+      "selectors": {
+        "promptInput": [
+          "textarea[placeholder='Ask privately']",
+          "textarea[placeholder*='Ask privately']",
+          "textarea[name='user-prompt']",
+          "textarea"
+        ],
+        "submitButton": [
+          "button[aria-label='Send']",
+          "button[aria-label*='Send']",
+          "button[type='submit']"
+        ],
+        "responseContainer": [
+          "div.serp__bottom-right",
+          "div.js-serp-bottom-right",
+          "div[class*='serp__bottom']"
+        ],
+        "streamingIndicator": [
+          "div[class*='loading']",
+          "div.animate-pulse",
+          "svg.animate-spin"
+        ],
+        "errorMessage": [
+          "div[role='alert']",
+          "div[class*='error']"
+        ],
+        "newChatButton": [
+          "button[aria-label='Clear chat']",
+          "button[aria-label='clear']"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 60000,
+        "typingDelay": 40,
+        "initialWait": 2000
+      },
+      "rateLimit": {
+        "requestsPerMinute": 10,
+        "cooldownMs": 6000,
+        "burstLimit": 3
+      },
+      "retryStrategy": {
+        "maxRetries": 3,
+        "retryDelay": 5000,
+        "backoffMultiplier": 1.5
+      }
+    },
+
+    "huggingchat": {
+      "name": "HuggingChat",
+      "url": "https://huggingface.co/chat",
+      "priority": 2,
+      "reliabilityScore": 90,
+      "features": {
+        "noAuthentication": true,
+        "noRateLimit": false,
+        "fastResponse": true,
+        "stableSelectors": true,
+        "mayRequireTermsAcceptance": true
+      },
+      "selectors": {
+        "promptInput": [
+          "textarea[placeholder*='Ask anything']",
+          "textarea[rows]",
+          "form textarea",
+          "textarea"
+        ],
+        "submitButton": [
+          "button[type='submit']",
+          "form button[type='submit']",
+          "button:has(svg)"
+        ],
+        "responseContainer": [
+          "div.max-w-3xl",
+          "div.prose",
+          "div[class*='message']"
+        ],
+        "streamingIndicator": [
+          "div.animate-pulse",
+          "div[class*='loading']",
+          "svg.animate-spin"
+        ],
+        "errorMessage": [
+          "div.bg-red-50",
+          "div[role='alert']",
+          "div[class*='error']"
+        ],
+        "newChatButton": [
+          "a:has-text('New Chat')",
+          "button:has-text('New Chat')"
+        ],
+        "acceptTermsButton": [
+          "button:has-text('Accept')",
+          "button:has-text('I agree')",
+          "button:has-text('Continue')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 90000,
+        "typingDelay": 40,
+        "initialWait": 3000
+      },
+      "rateLimit": {
+        "requestsPerMinute": 5,
+        "cooldownMs": 12000,
+        "burstLimit": 2
+      },
+      "retryStrategy": {
+        "maxRetries": 3,
+        "retryDelay": 10000,
+        "backoffMultiplier": 2
+      },
+      "specialHandling": {
+        "checkForTermsDialog": true,
+        "acceptTermsOnFirstVisit": true
+      }
+    }
+  },
+
+  "globalSettings": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "defaultTimeout": 30000,
+    "navigationTimeout": 60000,
+    "screenshotOnError": true,
+    "screenshotOnSuccess": false,
+    "cookieStoragePath": "./cookies",
+    "sessionStoragePath": "./sessions",
+    "maxConcurrentPlatforms": 2,
+    "platformRotation": true
+  },
+
+  "errorHandling": {
+    "patterns": {
+      "rateLimit": [
+        "rate limit",
+        "too many requests",
+        "slow down",
+        "try again later",
+        "quota exceeded"
+      ],
+      "authentication": [
+        "sign in",
+        "log in",
+        "authentication required",
+        "session expired"
+      ],
+      "captcha": [
+        "verify you're human",
+        "complete the captcha",
+        "cloudflare"
+      ],
+      "serverError": [
+        "500",
+        "503",
+        "server error",
+        "temporarily unavailable",
+        "maintenance"
+      ]
+    },
+    "fallbackBehavior": {
+      "onRateLimit": "switchPlatform",
+      "onAuthentication": "skip",
+      "onCaptcha": "skip",
+      "onServerError": "retry"
+    }
+  },
+
+  "monitoring": {
+    "enabled": true,
+    "metrics": [
+      "successRate",
+      "averageResponseTime",
+      "errorRate",
+      "platformAvailability"
+    ],
+    "alertThresholds": {
+      "successRate": 0.8,
+      "errorRate": 0.2,
+      "averageResponseTime": 90000
+    }
+  },
+
+  "testScenarios": [
+    {
+      "name": "Simple Math",
+      "prompt": "What is 2+2?",
+      "expectedKeywords": ["4", "four"],
+      "timeout": 30000
+    },
+    {
+      "name": "General Knowledge",
+      "prompt": "What is the capital of France?",
+      "expectedKeywords": ["Paris"],
+      "timeout": 30000
+    },
+    {
+      "name": "Code Generation",
+      "prompt": "Write a Python function to calculate factorial",
+      "expectedKeywords": ["def", "factorial", "return"],
+      "timeout": 60000
+    }
+  ],
+
+  "deploymentNotes": {
+    "recommendations": [
+      "Start with DuckDuckGo as primary platform (highest reliability)",
+      "Use HuggingChat as fallback",
+      "Implement platform rotation to avoid rate limits",
+      "Monitor success rates and switch if below 80%",
+      "Keep cookie storage clean to avoid session issues"
+    ],
+    "knownIssues": [
+      "HuggingChat may require accepting terms on first visit",
+      "Both platforms have rate limits - implement cooldown periods",
+      "DuckDuckGo response container may vary - use multiple selectors"
+    ],
+    "futureEnhancements": [
+      "Add Perplexity once submit button selector is fixed",
+      "Consider adding Phind.com with proper selector discovery",
+      "Implement CAPTCHA detection and automatic platform switching",
+      "Add session persistence for better reliability"
+    ]
+  }
+}

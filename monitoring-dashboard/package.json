@@ -1,0 +1,31 @@
+{
+  "name": "ai-orchestrator-monitoring-dashboard",
+  "version": "1.0.0",
+  "description": "Real-time monitoring dashboard for AI Orchestrator system",
+  "main": "monitoring-server.js",
+  "scripts": {
+    "start": "node monitoring-server.js",
+    "dev": "NODE_ENV=development GENERATE_MOCK_DATA=true node monitoring-server.js",
+    "prod": "NODE_ENV=production node monitoring-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "monitoring",
+    "dashboard",
+    "real-time",
+    "websocket",
+    "metrics",
+    "alerts",
+    "ai-orchestrator"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.1.0",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

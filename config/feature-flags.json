@@ -1,0 +1,212 @@
+{
+  "flags": {
+    "ultraParallelExecution": {
+      "enabled": true,
+      "rolloutPercentage": 100,
+      "enabledUsers": [],
+      "disabledUsers": [],
+      "enabledGroups": [],
+      "disabledGroups": [],
+      "variants": null,
+      "conditions": [],
+      "startDate": null,
+      "endDate": null,
+      "description": "Ultra-parallel execution mode for maximum throughput",
+      "metadata": {
+        "category": "performance",
+        "owner": "platform-team"
+      }
+    },
+    "apiPoweredMode": {
+      "enabled": true,
+      "rolloutPercentage": 100,
+      "enabledUsers": [],
+      "disabledUsers": [],
+      "enabledGroups": ["premium", "enterprise"],
+      "disabledGroups": [],
+      "variants": null,
+      "conditions": [],
+      "startDate": null,
+      "endDate": null,
+      "description": "Use API-powered requests instead of browser automation",
+      "metadata": {
+        "category": "integration",
+        "owner": "api-team"
+      }
+    },
+    "advancedErrorRecovery": {
+      "enabled": true,
+      "rolloutPercentage": 100,
+      "enabledUsers": [],
+      "disabledUsers": [],
+      "enabledGroups": [],
+      "disabledGroups": [],
+      "variants": null,
+      "conditions": [],
+      "startDate": null,
+      "endDate": null,
+      "description": "Advanced error recovery with circuit breakers and automatic retry",
+      "metadata": {
+        "category": "reliability",
+        "owner": "platform-team"
+      }
+    },
+    "contentFormatting": {
+      "enabled": true,
+      "rolloutPercentage": 100,
+      "enabledUsers": [],
+      "disabledUsers": [],
+      "enabledGroups": [],
+      "disabledGroups": [],
+      "variants": null,
+      "conditions": [],
+      "startDate": null,
+      "endDate": null,
+      "description": "Enhanced content formatting with markdown, code highlighting, and tables",
+      "metadata": {
+        "category": "ui",
+        "owner": "frontend-team"
+      }
+    },
+    "healthMonitoring": {
+      "enabled": true,
+      "rolloutPercentage": 100,
+      "enabledUsers": [],
+      "disabledUsers": [],
+      "enabledGroups": [],
+      "disabledGroups": [],
+      "variants": null,
+      "conditions": [],
+      "startDate": null,
+      "endDate": null,
+      "description": "System health monitoring with alerts and metrics",
+      "metadata": {
+        "category": "monitoring",
+        "owner": "ops-team"
+      }
+    },
+    "experimentalABTest": {
+      "enabled": true,
+      "rolloutPercentage": 50,
+      "enabledUsers": ["beta-user-1", "beta-user-2"],
+      "disabledUsers": [],
+      "enabledGroups": ["beta"],
+      "disabledGroups": [],
+      "variants": [
+        {
+          "name": "control",
+          "weight": 0.5,
+          "description": "Original implementation"
+        },
+        {
+          "name": "variant-a",
+          "weight": 0.3,
+          "description": "New algorithm with improved performance"
+        },
+        {
+          "name": "variant-b",
+          "weight": 0.2,
+          "description": "Alternative approach with better accuracy"
+        }
+      ],
+      "conditions": [
+        {
+          "property": "subscription",
+          "operator": "equals",
+          "value": "premium"
+        }
+      ],
+      "startDate": "2025-10-01T00:00:00Z",
+      "endDate": "2025-12-31T23:59:59Z",
+      "description": "A/B test for new feature implementation",
+      "metadata": {
+        "category": "experiment",
+        "owner": "product-team",
+        "experiment": true,
+        "trackingId": "exp-001"
+      }
+    },
+    "gradualRolloutFeature": {
+      "enabled": true,
+      "rolloutPercentage": 25,
+      "enabledUsers": [],
+      "disabledUsers": [],
+      "enabledGroups": [],
+      "disabledGroups": [],
+      "variants": null,
+      "conditions": [],
+      "startDate": null,
+      "endDate": null,
+      "description": "Feature with gradual rollout - currently at 25%",
+      "metadata": {
+        "category": "rollout",
+        "owner": "platform-team",
+        "rolloutPlan": "25% → 50% → 75% → 100%"
+      }
+    },
+    "premiumOnlyFeature": {
+      "enabled": true,
+      "rolloutPercentage": 100,
+      "enabledUsers": [],
+      "disabledUsers": [],
+      "enabledGroups": ["premium", "enterprise"],
+      "disabledGroups": ["free", "trial"],
+      "variants": null,
+      "conditions": [
+        {
+          "property": "subscription",
+          "operator": "equals",
+          "value": "premium"
+        }
+      ],
+      "startDate": null,
+      "endDate": null,
+      "description": "Feature available only to premium subscribers",
+      "metadata": {
+        "category": "monetization",
+        "owner": "business-team"
+      }
+    },
+    "scheduledFeature": {
+      "enabled": true,
+      "rolloutPercentage": 100,
+      "enabledUsers": [],
+      "disabledUsers": [],
+      "enabledGroups": [],
+      "disabledGroups": [],
+      "variants": null,
+      "conditions": [],
+      "startDate": "2025-11-01T00:00:00Z",
+      "endDate": "2025-11-30T23:59:59Z",
+      "description": "Feature scheduled for November 2025 only",
+      "metadata": {
+        "category": "seasonal",
+        "owner": "marketing-team",
+        "campaign": "november-special"
+      }
+    },
+    "debugMode": {
+      "enabled": false,
+      "rolloutPercentage": 0,
+      "enabledUsers": ["admin", "developer"],
+      "disabledUsers": [],
+      "enabledGroups": ["internal"],
+      "disabledGroups": [],
+      "variants": null,
+      "conditions": [],
+      "startDate": null,
+      "endDate": null,
+      "description": "Debug mode with verbose logging and diagnostics",
+      "metadata": {
+        "category": "development",
+        "owner": "platform-team",
+        "internal": true
+      }
+    }
+  },
+  "metadata": {
+    "lastUpdated": "2025-10-20T23:30:00Z",
+    "version": "1.0.0",
+    "description": "Feature flags configuration for production orchestrator"
+  }
+}

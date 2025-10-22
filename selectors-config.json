@@ -1,0 +1,579 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-10-20",
+  "description": "Platform-specific selectors for AI web interfaces. Update these if platforms change their UI.",
+
+  "platforms": {
+    "lmarena": {
+      "name": "LMArena (LMSys)",
+      "url": "https://lmarena.ai/?mode=direct",
+      "status": "deprecated",
+      "note": "Site experiencing timeout issues. Removed from production config.",
+      "selectors": {
+        "promptInput": [
+          "textarea[placeholder*='Enter your prompt']",
+          "textarea.svelte-1ed2p3z",
+          "textarea[data-testid='textbox']",
+          "#component-5 textarea",
+          "div.input-area textarea"
+        ],
+        "submitButton": [
+          "button:has-text('Send')",
+          "button.primary",
+          "button[aria-label='Submit']",
+          "button:has(svg[data-icon='paper-plane'])"
+        ],
+        "modelSelector": [
+          "select[aria-label='Model']",
+          "div.model-selector",
+          "button:has-text('Select Model')"
+        ],
+        "responseContainer": [
+          "div.message.bot",
+          "div.bot-message",
+          "div[data-testid='bot-message']",
+          "div.message:not(.user)"
+        ],
+        "streamingIndicator": [
+          "div.typing-indicator",
+          "div.loading-dots",
+          "span:has-text('...')"
+        ],
+        "errorMessage": [
+          "div.error-message",
+          "div[role='alert']",
+          "p.text-red-500"
+        ],
+        "clearButton": [
+          "button:has-text('Clear')",
+          "button:has-text('New')",
+          "button[aria-label='Clear conversation']"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 90000,
+        "typingDelay": 50
+      },
+      "rateLimit": {
+        "requestsPerMinute": 10,
+        "cooldownMs": 6000
+      }
+    },
+
+    "duckduckgo": {
+      "name": "DuckDuckGo AI Chat",
+      "url": "https://duckduckgo.com/?q=DuckDuckGo&ia=chat",
+      "selectors": {
+        "promptInput": [
+          "textarea[placeholder='Ask privately']",
+          "textarea[placeholder*='Ask privately']",
+          "textarea[name='user-prompt']",
+          "textarea.JRDRiEf5NPKWK43sArdC",
+          "textarea"
+        ],
+        "submitButton": [
+          "button[aria-label='Send']",
+          "[aria-label='Send']",
+          "button[aria-label*='Send']",
+          "button[type='submit']"
+        ],
+        "responseContainer": [
+          "div.serp__bottom-right.js-serp-bottom-right",
+          "div.serp__bottom-right",
+          "div.js-serp-bottom-right",
+          "div[class*='serp__bottom']"
+        ],
+        "streamingIndicator": [
+          "div[class*='loading']",
+          "div.animate-pulse",
+          "svg.animate-spin"
+        ],
+        "errorMessage": [
+          "div[role='alert']",
+          "div[class*='error']",
+          "div.text-red-500"
+        ],
+        "newChatButton": [
+          "button[aria-label='Clear chat']",
+          "[aria-label='clear']",
+          "button[aria-label='clear']"
+        ],
+        "clearButton": [
+          "button[aria-label='clear']",
+          "[aria-label='Clear chat']",
+          "button:has-text('Clear')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 60000,
+        "typingDelay": 40
+      },
+      "rateLimit": {
+        "requestsPerMinute": 10,
+        "cooldownMs": 6000
+      }
+    },
+
+    "huggingchat": {
+      "name": "HuggingChat",
+      "url": "https://huggingface.co/chat",
+      "selectors": {
+        "promptInput": [
+          "textarea[placeholder*='Ask anything']",
+          "textarea[rows]",
+          "form textarea",
+          "textarea.scroll-p-3",
+          "textarea"
+        ],
+        "submitButton": [
+          "button[type='submit']",
+          "form button[type='submit']",
+          "button:has(svg)",
+          "button:has-text('Submit')"
+        ],
+        "responseContainer": [
+          "div.max-w-3xl",
+          "div.prose",
+          "div[class*='message']",
+          "main div[class*='prose']"
+        ],
+        "streamingIndicator": [
+          "div.animate-pulse",
+          "div[class*='loading']",
+          "svg.animate-spin"
+        ],
+        "errorMessage": [
+          "div.bg-red-50",
+          "div[role='alert']",
+          "div[class*='error']"
+        ],
+        "newChatButton": [
+          "a:has-text('New Chat')",
+          "button:has-text('New Chat')",
+          "a[href='/chat']"
+        ],
+        "acceptTermsButton": [
+          "button:has-text('Accept')",
+          "button:has-text('I agree')",
+          "button:has-text('Continue')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 90000,
+        "typingDelay": 40
+      },
+      "rateLimit": {
+        "requestsPerMinute": 5,
+        "cooldownMs": 12000
+      }
+    },
+
+    "perplexity": {
+      "name": "Perplexity AI",
+      "url": "https://www.perplexity.ai",
+      "status": "needs-improvement",
+      "note": "Submit button selector needs work. Response container needs validation.",
+      "selectors": {
+        "promptInput": [
+          "div[contenteditable='true']",
+          "#ask-input",
+          "div#ask-input",
+          "div.resize-none",
+          "textarea[placeholder*='Ask anything']"
+        ],
+        "submitButton": [
+          "button[aria-label='Submit']",
+          "button:has(svg[class*='arrow'])",
+          "button[type='submit']",
+          "button:has(svg)"
+        ],
+        "responseContainer": [
+          "div[class*='answer']",
+          "div.prose",
+          "div[class*='response']",
+          "div[class*='message']"
+        ],
+        "streamingIndicator": [
+          "div[class*='typing']",
+          "div.animate-pulse",
+          "div.animate-in",
+          "svg.animate-spin"
+        ],
+        "errorMessage": [
+          "div[role='alert']",
+          "div[class*='error']",
+          "div.text-red-500"
+        ],
+        "newChatButton": [
+          "button:has-text('New')",
+          "a:has-text('New Thread')",
+          "button:has-text('New Thread')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 60000,
+        "typingDelay": 35
+      },
+      "rateLimit": {
+        "requestsPerMinute": 3,
+        "cooldownMs": 20000
+      }
+    },
+
+    "claude": {
+      "name": "Claude.ai (Anthropic)",
+      "url": "https://claude.ai/new",
+      "selectors": {
+        "promptInput": [
+          "div[contenteditable='true'][data-placeholder]",
+          "div.ProseMirror",
+          "p[data-placeholder*='Talk to Claude']",
+          "div.composer-input"
+        ],
+        "submitButton": [
+          "button[aria-label='Send Message']",
+          "button:has(svg.lucide-arrow-up)",
+          "button.send-button",
+          "button:has-text('Send')"
+        ],
+        "responseContainer": [
+          "div[data-test-render-count]",
+          "div.font-claude-message",
+          "div.prose",
+          "div.message-content"
+        ],
+        "streamingIndicator": [
+          "div.animate-pulse",
+          "div.typing-indicator"
+        ],
+        "errorMessage": [
+          "div.text-text-error",
+          "div[role='alert']",
+          "div.error-banner"
+        ],
+        "newChatButton": [
+          "button:has-text('New chat')",
+          "a[href='/new']",
+          "button[aria-label='Start new conversation']"
+        ],
+        "loginRequired": [
+          "button:has-text('Log in')",
+          "a:has-text('Sign in')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 120000,
+        "typingDelay": 30
+      },
+      "rateLimit": {
+        "requestsPerMinute": 5,
+        "cooldownMs": 12000
+      }
+    },
+
+    "chatgpt": {
+      "name": "ChatGPT (OpenAI)",
+      "url": "https://chat.openai.com",
+      "selectors": {
+        "promptInput": [
+          "#prompt-textarea",
+          "textarea[data-id='root']",
+          "textarea[placeholder*='Message ChatGPT']",
+          "div[contenteditable='true']"
+        ],
+        "submitButton": [
+          "button[data-testid='send-button']",
+          "button:has(svg[data-icon='paper-plane'])",
+          "button[aria-label='Send prompt']"
+        ],
+        "modelSelector": [
+          "button:has-text('GPT-4')",
+          "button:has-text('GPT-3.5')",
+          "div.model-switcher"
+        ],
+        "responseContainer": [
+          "div[data-message-author-role='assistant']",
+          "div.markdown.prose",
+          "div.agent-turn",
+          "div.message.assistant"
+        ],
+        "streamingIndicator": [
+          "div.result-streaming",
+          "div.text-2xl > span"
+        ],
+        "errorMessage": [
+          "div.text-red-500",
+          "div[role='alert']",
+          "div.error-message"
+        ],
+        "newChatButton": [
+          "a:has-text('New chat')",
+          "button:has-text('New chat')",
+          "nav a[href='/']"
+        ],
+        "loginRequired": [
+          "button:has-text('Log in')",
+          "a:has-text('Sign up')"
+        ],
+        "captcha": [
+          "iframe[src*='captcha']",
+          "div#cf-challenge",
+          "div.g-recaptcha"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 120000,
+        "typingDelay": 40
+      },
+      "rateLimit": {
+        "requestsPerMinute": 3,
+        "cooldownMs": 20000
+      }
+    },
+
+    "gemini": {
+      "name": "Gemini (Google)",
+      "url": "https://gemini.google.com/app",
+      "selectors": {
+        "promptInput": [
+          "rich-textarea[aria-label*='Enter a prompt']",
+          "div.ql-editor[contenteditable='true']",
+          "div[data-placeholder*='Enter a prompt']",
+          "textarea.input-area"
+        ],
+        "submitButton": [
+          "button[aria-label*='Send']",
+          "button.send-button",
+          "button:has(mat-icon:has-text('send'))"
+        ],
+        "responseContainer": [
+          "message-content",
+          "model-response",
+          "div.response-container",
+          "div.markdown-content"
+        ],
+        "streamingIndicator": [
+          "div.thinking-indicator",
+          "mat-spinner"
+        ],
+        "errorMessage": [
+          "div.error-message",
+          "snack-bar-container",
+          "div[role='alert']"
+        ],
+        "newChatButton": [
+          "button:has-text('New chat')",
+          "button[aria-label='New chat']"
+        ],
+        "loginRequired": [
+          "button:has-text('Sign in')",
+          "a:has-text('Sign in')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "networkidle",
+        "responseTimeout": 90000,
+        "typingDelay": 35
+      },
+      "rateLimit": {
+        "requestsPerMinute": 5,
+        "cooldownMs": 12000
+      }
+    },
+
+    "poe": {
+      "name": "Poe.com (Quora)",
+      "url": "https://poe.com",
+      "selectors": {
+        "botSelector": [
+          "a[class*='ChatHistoryListItem']",
+          "button:has-text('GPT-4')",
+          "button:has-text('Claude')"
+        ],
+        "promptInput": [
+          "textarea[placeholder*='Talk to']",
+          "textarea.GrowingTextArea_textArea__ZWQbP",
+          "footer textarea"
+        ],
+        "submitButton": [
+          "button[class*='ChatMessageSendButton']",
+          "button:has(svg[data-icon='send'])",
+          "button[aria-label='Send']"
+        ],
+        "responseContainer": [
+          "div[class*='Message_botMessageBubble']",
+          "div.markdown-body",
+          "div[class*='ChatMessage_messageRow']"
+        ],
+        "streamingIndicator": [
+          "div[class*='ChatMessageInputFooter_stopButton']",
+          "button:has-text('Stop')"
+        ],
+        "errorMessage": [
+          "div.error",
+          "div[role='alert']"
+        ],
+        "loginRequired": [
+          "button:has-text('Log in')",
+          "a:has-text('Sign up')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 120000,
+        "typingDelay": 45
+      },
+      "rateLimit": {
+        "requestsPerMinute": 5,
+        "cooldownMs": 12000
+      }
+    },
+
+    "playground": {
+      "name": "Playground AI",
+      "url": "https://playground.com/create",
+      "selectors": {
+        "promptInput": [
+          "textarea[placeholder*='Describe']",
+          "textarea[placeholder*='prompt']",
+          "input[type='text'][placeholder*='imagine']"
+        ],
+        "submitButton": [
+          "button:has-text('Generate')",
+          "button:has-text('Create')",
+          "button.generate-button"
+        ],
+        "modelSelector": [
+          "select[aria-label='Model']",
+          "div.model-dropdown"
+        ],
+        "imageContainer": [
+          "div.generated-image",
+          "img.output-image",
+          "div.image-grid img"
+        ],
+        "loadingIndicator": [
+          "div.generating",
+          "div.loading-spinner",
+          "div:has-text('Generating')"
+        ],
+        "downloadButton": [
+          "button:has-text('Download')",
+          "a[download]"
+        ],
+        "errorMessage": [
+          "div.error-message",
+          "div[role='alert']"
+        ],
+        "loginRequired": [
+          "button:has-text('Sign in')",
+          "a:has-text('Log in')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "networkidle",
+        "responseTimeout": 180000,
+        "typingDelay": 50
+      },
+      "rateLimit": {
+        "requestsPerMinute": 2,
+        "cooldownMs": 30000
+      }
+    },
+
+    "veed": {
+      "name": "VEED.io AI Video",
+      "url": "https://www.veed.io/tools/ai-video-generator",
+      "selectors": {
+        "promptInput": [
+          "textarea[placeholder*='Describe your video']",
+          "input[placeholder*='video idea']",
+          "textarea.prompt-input"
+        ],
+        "submitButton": [
+          "button:has-text('Generate')",
+          "button:has-text('Create Video')",
+          "button.generate-btn"
+        ],
+        "videoContainer": [
+          "video",
+          "div.video-player",
+          "div.preview-container video"
+        ],
+        "loadingIndicator": [
+          "div.generating-video",
+          "div.progress-bar",
+          "div:has-text('Generating')"
+        ],
+        "downloadButton": [
+          "button:has-text('Download')",
+          "a:has-text('Export')"
+        ],
+        "errorMessage": [
+          "div.error",
+          "div[role='alert']"
+        ],
+        "loginRequired": [
+          "button:has-text('Sign up')",
+          "a:has-text('Log in')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "networkidle",
+        "responseTimeout": 300000,
+        "typingDelay": 60
+      },
+      "rateLimit": {
+        "requestsPerMinute": 1,
+        "cooldownMs": 60000
+      }
+    }
+  },
+
+  "globalSettings": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "defaultTimeout": 30000,
+    "navigationTimeout": 60000,
+    "screenshotOnError": true,
+    "cookieStoragePath": "./cookies",
+    "sessionStoragePath": "./sessions"
+  },
+
+  "errorPatterns": {
+    "rateLimit": [
+      "rate limit",
+      "too many requests",
+      "slow down",
+      "try again later",
+      "quota exceeded"
+    ],
+    "authentication": [
+      "sign in",
+      "log in",
+      "authentication required",
+      "session expired"
+    ],
+    "captcha": [
+      "verify you're human",
+      "complete the captcha",
+      "cloudflare"
+    ],
+    "serverError": [
+      "500",
+      "503",
+      "server error",
+      "temporarily unavailable",
+      "maintenance"
+    ]
+  }
+}

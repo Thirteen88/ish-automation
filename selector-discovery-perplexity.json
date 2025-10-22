@@ -1,0 +1,34 @@
+{
+  "platformName": "perplexity",
+  "url": "https://www.perplexity.ai",
+  "timestamp": "2025-10-21T20:34:36.114Z",
+  "selectors": {
+    "promptInput": [
+      "#ask-input",
+      "div#ask-input",
+      "div.resize-none",
+      "div.caret-super",
+      "div.placeholder-quieter"
+    ],
+    "submitButton": [],
+    "responseContainer": [
+      "#cookie-consent",
+      "div#cookie-consent",
+      "div.mb-lg.bottom-0.flex",
+      "div.bottom-sm.inset-x-sm.p-md",
+      "div.mb-lg"
+    ],
+    "streamingIndicator": [
+      "div.animate-in.fade-in.duration-300",
+      "div.items-stretch",
+      "div.ease-outExpo",
+      "div.backdrop-blur-sm",
+      "div.fill-mode-both"
+    ],
+    "errorMessage": [],
+    "modelSelector": [],
+    "newChatButton": [],
+    "clearButton": [],
+    "loginRequired": []
+  }
+}

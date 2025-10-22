@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Orchestrator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 380px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+
+    .header {
+      padding: 20px;
+      color: white;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .header .subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4CAF50;
+    }
+
+    .status-indicator.disconnected {
+      background: #f44336;
+    }
+
+    .status-indicator.connecting {
+      background: #FF9800;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .content {
+      background: white;
+      border-radius: 12px 12px 0 0;
+      padding: 20px;
+      min-height: 400px;
+    }
+
+    .quick-query {
+      margin-bottom: 20px;
+    }
+
+    .quick-query h3 {
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: #333;
+    }
+
+    .query-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      resize: vertical;
+      font-family: inherit;
+      min-height: 80px;
+    }
+
+    .query-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .platform-selection {
+      margin: 16px 0;
+    }
+
+    .platform-selection h4 {
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: #666;
+    }
+
+    .platform-toggles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .platform-toggle {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: #f5f5f5;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .platform-toggle:hover {
+      background: #e8f4f8;
+    }
+
+    .platform-toggle.active {
+      background: #E3F2FD;
+      border-color: #1976D2;
+    }
+
+    .platform-toggle input {
+      margin-right: 8px;
+    }
+
+    .platform-toggle label {
+      font-size: 13px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .recent-queries {
+      margin-top: 24px;
+    }
+
+    .recent-queries h3 {
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: #333;
+    }
+
+    .query-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .query-item {
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .query-item:hover {
+      background: #e8f4f8;
+    }
+
+    .query-item-text {
+      font-size: 13px;
+      color: #333;
+      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .query-item-meta {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+      font-size: 13px;
+    }
+
+    .footer {
+      padding: 16px 20px;
+      background: white;
+      border-top: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-btn {
+      padding: 8px 12px;
+      background: transparent;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .footer-btn:hover {
+      background: #f5f5f5;
+      border-color: #999;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .loading.active {
+      display: block;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>AI Orchestrator</h1>
+    <div class="subtitle">Query multiple AI platforms simultaneously</div>
+    <div class="connection-status">
+      <div class="status-indicator" id="status-indicator"></div>
+      <span id="status-text">Connecting...</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="quick-query">
+      <h3>Quick Query</h3>
+      <textarea
+        class="query-input"
+        id="query-input"
+        placeholder="Enter your question or paste text to analyze..."></textarea>
+
+      <div class="platform-selection">
+        <h4>Select Platforms</h4>
+        <div class="platform-toggles">
+          <div class="platform-toggle active" data-platform="lmarena">
+            <input type="checkbox" id="platform-lmarena" checked>
+            <label for="platform-lmarena">LMArena</label>
+          </div>
+          <div class="platform-toggle active" data-platform="claude">
+            <input type="checkbox" id="platform-claude" checked>
+            <label for="platform-claude">Claude</label>
+          </div>
+          <div class="platform-toggle active" data-platform="chatgpt">
+            <input type="checkbox" id="platform-chatgpt" checked>
+            <label for="platform-chatgpt">ChatGPT</label>
+          </div>
+          <div class="platform-toggle active" data-platform="gemini">
+            <input type="checkbox" id="platform-gemini" checked>
+            <label for="platform-gemini">Gemini</label>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" id="submit-btn">Ask All AIs</button>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div>Submitting query...</div>
+    </div>
+
+    <div class="recent-queries">
+      <h3>Recent Queries</h3>
+      <div class="query-list" id="query-list">
+        <div class="empty-state">No recent queries</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button class="footer-btn" id="settings-btn">Settings</button>
+    <button class="footer-btn" id="open-panel-btn">Open Side Panel</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": "2025-10-20T18:50:17.847Z",
+    "prompt": "Create a comprehensive task breakdown for launching a mobile app",
+    "context": {
+      "projectType": "mobile-app-launch"
+    },
+    "model": "claude-3-sonnet"
+  },
+  {
+    "timestamp": "2025-10-20T18:50:17.848Z",
+    "prompt": "Create a checklist for presentation preparation",
+    "context": {
+      "presentationType": "business-pitch"
+    },
+    "model": "claude-3-sonnet"
+  }
+]

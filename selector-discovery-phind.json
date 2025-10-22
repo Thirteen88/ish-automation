@@ -1,0 +1,36 @@
+{
+  "platformName": "phind",
+  "url": "https://www.phind.com",
+  "timestamp": "2025-10-21T20:37:02.985Z",
+  "selectors": {
+    "promptInput": [
+      "textarea.w-full.resize-none.outline-none",
+      "div.notranslate.public-DraftEditor-content",
+      "textarea.w-full",
+      "textarea.resize-none",
+      "textarea.outline-none"
+    ],
+    "submitButton": [],
+    "responseContainer": [
+      "div.absolute.bottom-0.left-0",
+      "div.absolute.bottom-10.left-0",
+      "div.fixed.bottom-4.left-0",
+      "div.masthead-chatbox",
+      "div.bottom-0"
+    ],
+    "streamingIndicator": [],
+    "errorMessage": [
+      "#__next-route-announcer__",
+      "div#__next-route-announcer__",
+      "div"
+    ],
+    "modelSelector": [],
+    "newChatButton": [],
+    "clearButton": [],
+    "loginRequired": [
+      "button.sign-in-button.h-7.p-2",
+      "button.sign-in-button",
+      "button[class*=\"sign\"]"
+    ]
+  }
+}

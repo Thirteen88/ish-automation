@@ -1,0 +1,11 @@
+[
+  {
+    "timestamp": "2025-10-20T16:34:50.189Z",
+    "prompt": "Create a comprehensive 3-month learning plan for machine learning from beginner to intermediate level",
+    "context": {
+      "skillLevel": "beginner",
+      "timeAvailable": "10 hours/week"
+    },
+    "model": "claude-3-opus"
+  }
+]

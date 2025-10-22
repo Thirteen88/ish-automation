@@ -1,0 +1,150 @@
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│          ISH AUTOMATION TUNNELING QUICK REFERENCE            │
+│                  No Signup Required!                         │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+FASTEST START (Recommended)
+═══════════════════════════════════════════════════════════════
+  cd /home/gary/ish-automation
+  ./start-tunnel.sh
+
+  This will:
+  ✓ Check your service on port 3002
+  ✓ Create public HTTPS URL
+  ✓ Auto-reconnect if disconnected
+  ✓ Show you the public URL
+
+
+ONE-LINER ALTERNATIVES
+═══════════════════════════════════════════════════════════════
+
+  Serveo (recommended):
+  ssh -R 80:localhost:3002 serveo.net
+
+  localhost.run:
+  ssh -R 80:localhost:3002 nokey@localhost.run
+
+  With custom subdomain:
+  ssh -R myname:80:localhost:3002 serveo.net
+
+
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+  Test everything first:
+  ./test-tunnel.sh
+
+  Check if service is running:
+  netstat -tlnp | grep 3002
+
+  View tunnel logs:
+  tail -f /tmp/ish-tunnel.log
+
+  Kill existing tunnel:
+  pkill -f "ssh.*serveo"
+
+
+COMMON ISSUES
+═══════════════════════════════════════════════════════════════
+
+  "No service on port 3002"
+  → Start the service first:
+    PORT=3002 node aria-mobile-server.js
+
+  "Connection refused"
+  → Check internet: ping serveo.net
+  → Try alternative: ssh -R 80:localhost:3002 nokey@localhost.run
+
+  "Tunnel keeps disconnecting"
+  → Use ./start-tunnel.sh (auto-reconnects)
+  → Check logs: tail -f /tmp/ish-tunnel.log
+
+
+RUNNING IN BACKGROUND
+═══════════════════════════════════════════════════════════════
+
+  Using screen:
+  screen -S tunnel
+  ./start-tunnel.sh
+  # Press Ctrl+A then D to detach
+  # screen -r tunnel to reattach
+
+  Using tmux:
+  tmux new -s tunnel
+  ./start-tunnel.sh
+  # Press Ctrl+B then D to detach
+  # tmux attach -t tunnel to reattach
+
+
+TESTING YOUR TUNNEL
+═══════════════════════════════════════════════════════════════
+
+  Once you get the public URL (e.g., https://xxx.serveo.net):
+
+  From command line:
+  curl https://xxx.serveo.net
+
+  From browser:
+  Open: https://xxx.serveo.net
+
+  WebSocket test (browser console):
+  const ws = new WebSocket('wss://xxx.serveo.net');
+  ws.onopen = () => console.log('Connected!');
+
+
+SECURITY NOTES
+═══════════════════════════════════════════════════════════════
+
+  ⚠ Anyone with the URL can access your service
+  ⚠ Don't expose sensitive data without authentication
+  ⚠ Stop tunnel when not in use (Ctrl+C)
+  ⚠ URLs change on each reconnect (random subdomain)
+
+
+ENVIRONMENT VARIABLES
+═══════════════════════════════════════════════════════════════
+
+  Change port:
+  PORT=3000 ./start-tunnel.sh
+
+  Custom subdomain:
+  SUBDOMAIN=myname ./start-tunnel.sh
+
+  Custom log file:
+  LOGFILE=/path/to/file.log ./start-tunnel.sh
+
+
+FILES CREATED
+═══════════════════════════════════════════════════════════════
+
+  /home/gary/ish-automation/start-tunnel.sh
+    → Smart tunnel with auto-reconnect
+
+  /home/gary/ish-automation/tunnel.sh
+    → Basic tunnel script (multiple methods)
+
+  /home/gary/ish-automation/test-tunnel.sh
+    → Pre-flight checks
+
+  /home/gary/ish-automation/TUNNELING.md
+    → Complete documentation
+
+
+NEED MORE HELP?
+═══════════════════════════════════════════════════════════════
+
+  Read full docs:
+  cat /home/gary/ish-automation/TUNNELING.md
+
+  Check logs:
+  tail -f /tmp/ish-tunnel.log
+
+  Test connectivity:
+  ./test-tunnel.sh
+
+
+┌──────────────────────────────────────────────────────────────┐
+│  Ready to go! Run: ./start-tunnel.sh                         │
+└──────────────────────────────────────────────────────────────┘

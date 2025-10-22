@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Mobile PWA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-btn {
+            background: #4f46e5;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-btn:hover {
+            background: #4338ca;
+        }
+        .status {
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .response-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 10px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .platform-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .platform-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        .platform-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .response-text {
+            color: #4b5563;
+            line-height: 1.6;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        #responses {
+            margin-top: 20px;
+        }
+        .loading {
+            opacity: 0.6;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.3; }
+        }
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #efe;
+            color: #060;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Mobile PWA Test Interface</h1>
+
+    <div class="status">
+        <h3>Connection Status</h3>
+        <p>WebSocket: <span id="ws-status">Not connected</span></p>
+        <p>API Endpoint: <span id="api-endpoint">-</span></p>
+    </div>
+
+    <div style="text-align: center;">
+        <button class="test-btn" onclick="connectToServer()">Connect to Server</button>
+        <button class="test-btn" onclick="testQuery()">Test Query</button>
+        <button class="test-btn" onclick="clearResponses()">Clear</button>
+    </div>
+
+    <div id="responses"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        let ws = null;
+        const platforms = {
+            lmarena: { name: 'LMArena', icon: '🏟️', color: '#8b5cf6' },
+            claude: { name: 'Claude', icon: '🤖', color: '#d97706' },
+            chatgpt: { name: 'ChatGPT', icon: '💬', color: '#10b981' },
+            gemini: { name: 'Gemini', icon: '✨', color: '#3b82f6' },
+            poe: { name: 'Poe', icon: '🎭', color: '#ec4899' }
+        };
+
+        document.getElementById('api-endpoint').textContent = API_BASE;
+
+        function connectToServer() {
+            const status = document.getElementById('ws-status');
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                showMessage('Already connected!', 'success');
+                return;
+            }
+
+            const wsUrl = API_BASE.replace(/^http/, 'ws');
+            console.log('Connecting to:', wsUrl);
+            status.textContent = 'Connecting...';
+            status.style.color = '#f59e0b';
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('✅ WebSocket connected');
+                status.textContent = 'Connected';
+                status.style.color = '#10b981';
+                showMessage('Connected to server!', 'success');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('📨 Message received:', data);
+                    handleWebSocketMessage(data);
+                } catch (error) {
+                    console.error('Failed to parse message:', error);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('❌ WebSocket error:', error);
+                status.textContent = 'Error';
+                status.style.color = '#ef4444';
+                showMessage('Connection error!', 'error');
+            };
+
+            ws.onclose = () => {
+                console.log('🔌 WebSocket disconnected');
+                status.textContent = 'Disconnected';
+                status.style.color = '#6b7280';
+            };
+        }
+
+        function handleWebSocketMessage(data) {
+            const container = document.getElementById('responses');
+
+            switch(data.type) {
+                case 'platform-start':
+                    console.log(`🚀 ${data.platform} started processing`);
+                    addResponseCard(data.platform, 'Processing...', true);
+                    break;
+
+                case 'response-chunk':
+                    console.log(`📝 ${data.platform} chunk:`, data.chunk);
+                    updateResponseCard(data.platform, data.chunk, false, true);
+                    break;
+
+                case 'platform-complete':
+                    console.log(`✅ ${data.platform} complete:`, data.response);
+                    updateResponseCard(data.platform, data.response, false, false);
+                    break;
+
+                case 'platform-error':
+                    console.log(`❌ ${data.platform} error:`, data.error);
+                    updateResponseCard(data.platform, `Error: ${data.error}`, true, false);
+                    break;
+
+                case 'query-complete':
+                    console.log('🎉 Query complete!');
+                    showMessage('All platforms have responded!', 'success');
+                    break;
+            }
+        }
+
+        function addResponseCard(platform, text, loading) {
+            const container = document.getElementById('responses');
+            const existing = document.querySelector(`[data-platform="${platform}"]`);
+
+            if (existing) {
+                existing.remove();
+            }
+
+            const info = platforms[platform] || { name: platform, icon: '❓', color: '#888' };
+            const card = document.createElement('div');
+            card.className = `response-card ${loading ? 'loading' : ''}`;
+            card.dataset.platform = platform;
+
+            card.innerHTML = `
+                <div class="platform-header">
+                    <div class="platform-icon" style="background: ${info.color}20; color: ${info.color}">
+                        ${info.icon}
+                    </div>
+                    <div class="platform-name">${info.name}</div>
+                </div>
+                <div class="response-text">${text}</div>
+            `;
+
+            container.appendChild(card);
+        }
+
+        function updateResponseCard(platform, text, isError, isChunk) {
+            const card = document.querySelector(`[data-platform="${platform}"]`);
+            if (card) {
+                const textDiv = card.querySelector('.response-text');
+                if (isChunk) {
+                    textDiv.textContent += text;
+                } else {
+                    textDiv.textContent = text;
+                }
+                card.classList.remove('loading');
+                if (isError) {
+                    textDiv.style.color = '#dc2626';
+                }
+            } else {
+                addResponseCard(platform, text, false);
+            }
+        }
+
+        async function testQuery() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showMessage('Please connect to server first!', 'error');
+                return;
+            }
+
+            const prompt = 'What is 2+2? Give me just the number.';
+            const selectedPlatforms = ['lmarena', 'claude', 'chatgpt', 'gemini', 'poe'];
+
+            clearResponses();
+            showMessage(`Testing query: "${prompt}"`, 'success');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt,
+                        platforms: selectedPlatforms
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Query response:', data);
+
+                if (data.success) {
+                    showMessage(`Query ID: ${data.queryId}`, 'success');
+                } else {
+                    showMessage(`Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Query failed:', error);
+                showMessage(`Failed: ${error.message}`, 'error');
+            }
+        }
+
+        function clearResponses() {
+            document.getElementById('responses').innerHTML = '';
+        }
+
+        function showMessage(text, type) {
+            const msg = document.createElement('div');
+            msg.className = type;
+            msg.textContent = text;
+            document.getElementById('responses').prepend(msg);
+            setTimeout(() => msg.remove(), 5000);
+        }
+
+        // Auto-connect on load
+        setTimeout(connectToServer, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+{
+  "version": "1.0.0-simplified",
+  "lastUpdated": "2025-10-21",
+  "description": "Simplified platform configuration for initial production deployment. Focuses on platforms with minimal authentication requirements and proven selectors.",
+
+  "platforms": {
+    "lmarena": {
+      "name": "LMArena (LMSys)",
+      "url": "https://lmarena.ai/?mode=direct",
+      "description": "Free, no-login-required AI chat arena. Direct mode provides immediate access.",
+      "authenticationRequired": false,
+      "productionReady": true,
+      "difficulty": "easy",
+      "selectors": {
+        "promptInput": [
+          "textarea[placeholder*='Enter your prompt']",
+          "textarea.svelte-1ed2p3z",
+          "textarea[data-testid='textbox']",
+          "#component-5 textarea",
+          "div.input-area textarea",
+          "textarea"
+        ],
+        "submitButton": [
+          "button:has-text('Send')",
+          "button.primary",
+          "button[aria-label='Submit']",
+          "button:has(svg[data-icon='paper-plane'])",
+          "button[type='submit']"
+        ],
+        "responseContainer": [
+          "div.message.bot",
+          "div.bot-message",
+          "div[data-testid='bot-message']",
+          "div.message:not(.user)",
+          "div[class*='message']"
+        ],
+        "streamingIndicator": [
+          "div.typing-indicator",
+          "div.loading-dots",
+          "span:has-text('...')",
+          "div[class*='loading']"
+        ],
+        "errorMessage": [
+          "div.error-message",
+          "div[role='alert']",
+          "p.text-red-500",
+          "div[class*='error']"
+        ],
+        "clearButton": [
+          "button:has-text('Clear')",
+          "button:has-text('New')",
+          "button[aria-label='Clear conversation']",
+          "button:has-text('Reset')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "networkidle",
+        "responseTimeout": 90000,
+        "typingDelay": 50,
+        "initialWait": 3000
+      },
+      "rateLimit": {
+        "requestsPerMinute": 10,
+        "cooldownMs": 6000
+      },
+      "notes": "Best platform for initial testing. No authentication required, stable selectors, consistent behavior."
+    },
+
+    "huggingface": {
+      "name": "HuggingChat",
+      "url": "https://huggingface.co/chat",
+      "description": "Free AI chat by HuggingFace. May require accepting terms on first visit.",
+      "authenticationRequired": false,
+      "productionReady": true,
+      "difficulty": "easy",
+      "selectors": {
+        "promptInput": [
+          "textarea[placeholder*='Ask anything']",
+          "textarea.scroll-p-3",
+          "textarea[rows]",
+          "form textarea",
+          "textarea"
+        ],
+        "submitButton": [
+          "button[type='submit']",
+          "button:has(svg)",
+          "button:has-text('Submit')",
+          "form button[type='submit']"
+        ],
+        "responseContainer": [
+          "div.prose",
+          "div[class*='message']",
+          "div.max-w-3xl",
+          "main div[class*='prose']"
+        ],
+        "streamingIndicator": [
+          "div.animate-pulse",
+          "div[class*='loading']",
+          "svg.animate-spin"
+        ],
+        "errorMessage": [
+          "div.bg-red-50",
+          "div[role='alert']",
+          "div[class*='error']"
+        ],
+        "newChatButton": [
+          "a:has-text('New Chat')",
+          "button:has-text('New Chat')",
+          "a[href='/chat']"
+        ],
+        "acceptTermsButton": [
+          "button:has-text('Accept')",
+          "button:has-text('I agree')",
+          "button:has-text('Continue')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 90000,
+        "typingDelay": 40,
+        "initialWait": 2000
+      },
+      "rateLimit": {
+        "requestsPerMinute": 5,
+        "cooldownMs": 12000
+      },
+      "notes": "Good alternative to LMArena. May require accepting terms on first visit. Stable and reliable."
+    },
+
+    "perplexity": {
+      "name": "Perplexity AI",
+      "url": "https://www.perplexity.ai",
+      "description": "AI search engine with chat interface. Limited free access without login.",
+      "authenticationRequired": false,
+      "productionReady": false,
+      "difficulty": "medium",
+      "selectors": {
+        "promptInput": [
+          "textarea[placeholder*='Ask anything']",
+          "textarea[placeholder*='Ask follow-up']",
+          "textarea.ProseMirror",
+          "div[contenteditable='true']",
+          "textarea"
+        ],
+        "submitButton": [
+          "button[aria-label='Submit']",
+          "button:has(svg[class*='arrow'])",
+          "button[type='submit']"
+        ],
+        "responseContainer": [
+          "div[class*='answer']",
+          "div.prose",
+          "div[class*='response']"
+        ],
+        "streamingIndicator": [
+          "div[class*='typing']",
+          "div.animate-pulse"
+        ],
+        "errorMessage": [
+          "div[role='alert']",
+          "div[class*='error']"
+        ],
+        "newChatButton": [
+          "button:has-text('New')",
+          "a:has-text('New Thread')"
+        ]
+      },
+      "waitStrategies": {
+        "pageLoad": "domcontentloaded",
+        "responseTimeout": 60000,
+        "typingDelay": 35,
+        "initialWait": 2000
+      },
+      "rateLimit": {
+        "requestsPerMinute": 3,
+        "cooldownMs": 20000
+      },
+      "notes": "May have rate limiting for free users. Consider for production after testing."
+    }
+  },
+
+  "globalSettings": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "defaultTimeout": 30000,
+    "navigationTimeout": 60000,
+    "screenshotOnError": true,
+    "cookieStoragePath": "./cookies",
+    "sessionStoragePath": "./sessions",
+    "maxRetries": 3,
+    "retryDelay": 5000
+  },
+
+  "errorPatterns": {
+    "rateLimit": [
+      "rate limit",
+      "too many requests",
+      "slow down",
+      "try again later",
+      "quota exceeded",
+      "please wait"
+    ],
+    "authentication": [
+      "sign in",
+      "log in",
+      "authentication required",
+      "session expired",
+      "please login"
+    ],
+    "captcha": [
+      "verify you're human",
+      "complete the captcha",
+      "cloudflare",
+      "are you a robot"
+    ],
+    "serverError": [
+      "500",
+      "503",
+      "server error",
+      "temporarily unavailable",
+      "maintenance",
+      "service unavailable"
+    ],
+    "termsRequired": [
+      "accept terms",
+      "agree to terms",
+      "terms of service",
+      "privacy policy"
+    ]
+  },
+
+  "deploymentStrategy": {
+    "phase1": {
+      "description": "Initial deployment with proven platforms",
+      "platforms": ["lmarena", "huggingface"],
+      "timeline": "Week 1-2",
+      "goals": [
+        "Validate selector accuracy",
+        "Test response extraction",
+        "Measure reliability",
+        "Optimize rate limiting"
+      ]
+    },
+    "phase2": {
+      "description": "Add platforms with moderate complexity",
+      "platforms": ["perplexity"],
+      "timeline": "Week 3-4",
+      "goals": [
+        "Handle rate limiting gracefully",
+        "Test on platforms with restrictions",
+        "Implement fallback strategies"
+      ]
+    },
+    "phase3": {
+      "description": "Add authenticated platforms",
+      "platforms": ["claude", "chatgpt", "gemini"],
+      "timeline": "Week 5+",
+      "goals": [
+        "Implement cookie/session management",
+        "Handle authentication flows",
+        "Manage CAPTCHA scenarios"
+      ]
+    }
+  },
+
+  "testingRecommendations": {
+    "priorityOrder": [
+      "lmarena",
+      "huggingface",
+      "perplexity"
+    ],
+    "testScenarios": [
+      {
+        "name": "Simple Query",
+        "prompt": "What is 2+2?",
+        "expectedBehavior": "Quick response with answer 4",
+        "timeout": 30000
+      },
+      {
+        "name": "Complex Query",
+        "prompt": "Explain quantum computing in simple terms",
+        "expectedBehavior": "Longer response with explanation",
+        "timeout": 60000
+      },
+      {
+        "name": "Code Generation",
+        "prompt": "Write a Python function to sort a list",
+        "expectedBehavior": "Response with code block",
+        "timeout": 45000
+      },
+      {
+        "name": "Rate Limit Test",
+        "prompt": "Test",
+        "expectedBehavior": "Multiple rapid requests should be throttled",
+        "iterations": 10
+      }
+    ],
+    "successCriteria": {
+      "minSuccessRate": 0.95,
+      "maxResponseTime": 90000,
+      "maxRetries": 3,
+      "minUptime": 0.99
+    }
+  }
+}

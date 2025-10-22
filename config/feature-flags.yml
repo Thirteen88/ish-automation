@@ -1,0 +1,69 @@
+# Feature Flags Configuration
+# Controls which features are enabled in different environments
+
+feature_flags:
+  # Browser Automation
+  browser_automation:
+    enabled: true
+    platforms:
+      huggingchat: true
+      perplexity: false  # Currently unreliable
+      duckduckgo: false  # Currently unreliable
+      phind: false       # Currently unreliable
+      youcom: false      # Currently unreliable
+
+  # API Features
+  api:
+    batch_processing: true
+    comparison_mode: true
+    response_caching: true
+    rate_limiting: true
+    authentication: true
+
+  # Monitoring Features
+  monitoring:
+    health_checks: true
+    metrics_collection: true
+    alerting: true
+    log_aggregation: true
+    tracing: true
+
+  # Resilience Features
+  resilience:
+    retry_mechanism: true
+    circuit_breaker: true
+    graceful_degradation: true
+    platform_fallback: true
+    queue_management: true
+
+  # Mobile PWA
+  pwa:
+    enabled: true
+    offline_mode: true
+    push_notifications: false  # Not implemented yet
+    background_sync: false     # Not implemented yet
+
+  # Experimental Features (disabled by default)
+  experimental:
+    ai_response_enhancement: false
+    multi_model_comparison: false
+    voice_interface: false
+    real_time_collaboration: false
+
+# Environment Overrides
+environments:
+  development:
+    experimental:
+      ai_response_enhancement: true
+      multi_model_comparison: true
+
+  staging:
+    pwa:
+      push_notifications: true
+      background_sync: true
+
+  production:
+    # All experimental features disabled
+    experimental:
+      ai_response_enhancement: false
+      multi_model_comparison: false

@@ -1,0 +1,242 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ish-api
+  namespace: ish-automation
+  labels:
+    app: ish-api
+    component: backend
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: ish-api
+  template:
+    metadata:
+      labels:
+        app: ish-api
+        component: backend
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: ish-api
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: api
+        image: ish-automation:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        - name: metrics
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: HOST
+          value: "0.0.0.0"
+        - name: REDIS_URL
+          value: "redis://ish-redis:6379"
+        - name: POSTGRES_HOST
+          value: "ish-postgres"
+        - name: POSTGRES_PORT
+          value: "5432"
+        envFrom:
+        - secretRef:
+            name: ish-api-secrets
+        - configMapRef:
+            name: ish-api-config
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+        - name: cache
+          mountPath: /app/cache
+        - name: secrets
+          mountPath: /app/.secrets
+          readOnly: true
+      volumes:
+      - name: logs
+        emptyDir: {}
+      - name: cache
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: secrets
+        secret:
+          secretName: ish-api-secrets
+          defaultMode: 0400
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ish-web
+  namespace: ish-automation
+  labels:
+    app: ish-web
+    component: frontend
+    version: v1
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: ish-web
+  template:
+    metadata:
+      labels:
+        app: ish-web
+        component: frontend
+        version: v1
+    spec:
+      serviceAccountName: ish-web
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: web
+        image: ish-automation:latest
+        imagePullPolicy: IfNotPresent
+        command: ["node", "web-server.js"]
+        ports:
+        - name: http
+          containerPort: 3001
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3001"
+        - name: API_URL
+          value: "http://ish-api:3000"
+        envFrom:
+        - configMapRef:
+            name: ish-web-config
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+        volumeMounts:
+        - name: screenshots
+          mountPath: /app/screenshots
+      volumes:
+      - name: screenshots
+        emptyDir:
+          sizeLimit: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ish-pwa
+  namespace: ish-automation
+  labels:
+    app: ish-pwa
+    component: pwa
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ish-pwa
+  template:
+    metadata:
+      labels:
+        app: ish-pwa
+        component: pwa
+        version: v1
+    spec:
+      containers:
+      - name: pwa
+        image: ish-automation-pwa:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 3002
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3002"
+        - name: API_URL
+          value: "http://ish-api:3000"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 5
+          periodSeconds: 5

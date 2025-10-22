@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Installation script for Orchestrator API Service (NVM-compatible)
+# Run with: sudo -E bash install-orchestrator-service-nvm.sh
+
+NODE_PATH=$(which node)
+echo "🚀 Installing Orchestrator API Service..."
+echo "📍 Node.js path: $NODE_PATH"
+
+# Create logs directory
+mkdir -p /home/gary/ish-automation/logs
+chown gary:gary /home/gary/ish-automation/logs
+echo "✅ Logs directory created"
+
+# Copy service file with correct Node path
+echo "📋 Installing systemd service file..."
+cat > /etc/systemd/system/orchestrator-api.service << EOF
+[Unit]
+Description=AI Orchestrator API Service
+After=network.target
+
+[Service]
+Type=simple
+User=gary
+WorkingDirectory=/home/gary/ish-automation
+Environment="NODE_ENV=production"
+Environment="PORT=8765"
+Environment="HEADLESS=true"
+Environment="PATH=/home/gary/.config/nvm/versions/node/v20.19.5/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=$NODE_PATH /home/gary/ish-automation/orchestrator-api-service.js
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/gary/ish-automation/logs/orchestrator-api.log
+StandardError=append:/home/gary/ish-automation/logs/orchestrator-api-error.log
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo "✅ Service file installed"
+
+# Reload systemd
+echo "🔄 Reloading systemd daemon..."
+systemctl daemon-reload
+
+# Enable service
+echo "✅ Enabling service to start on boot..."
+systemctl enable orchestrator-api.service
+
+# Start service
+echo "▶️  Starting service..."
+systemctl start orchestrator-api.service
+
+# Wait a moment
+sleep 3
+
+# Check status
+echo ""
+echo "📊 Service status:"
+systemctl status orchestrator-api.service --no-pager -l
+
+echo ""
+echo "✅ Installation complete!"
+echo ""
+echo "📋 Useful commands:"
+echo "   sudo systemctl start orchestrator-api    # Start the service"
+echo "   sudo systemctl stop orchestrator-api     # Stop the service"
+echo "   sudo systemctl restart orchestrator-api  # Restart the service"
+echo "   sudo systemctl status orchestrator-api   # Check service status"
+echo "   sudo journalctl -u orchestrator-api -f   # View live logs"
+echo ""
+echo "🌐 API will be available at: http://localhost:8765"
+echo ""
+echo "📝 Test with:"
+echo "   curl http://localhost:8765/health"
+echo ""
