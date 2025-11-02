@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISH Chat Integration Dashboard</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h1 {
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .status-item h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .status-item .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .status-item.error {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .status-item.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin: 4px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .log-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            margin-top: 16px;
+        }
+
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-timestamp {
+            color: #6c757d;
+            margin-right: 8px;
+        }
+
+        .log-level {
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .log-level.info { color: #17a2b8; }
+        .log-level.success { color: #28a745; }
+        .log-level.warning { color: #ffc107; }
+        .log-level.error { color: #dc3545; }
+
+        .screenshot-preview {
+            max-width: 300px;
+            border-radius: 8px;
+            margin-top: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .metric-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-card h4 {
+            color: #6c757d;
+            font-size: 12px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .metric-card .metric-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        // API configuration
+        const API_BASE = 'http://localhost:8000';
+        const API_KEY = 'ish-chat-secure-key-2024';
+
+        // WebSocket Hook
+        function useWebSocket(url) {
+            const [socket, setSocket] = useState(null);
+            const [connectionStatus, setConnectionStatus] = useState('disconnected');
+            const [lastMessage, setLastMessage] = useState(null);
+
+            useEffect(() => {
+                const ws = new WebSocket(url);
+
+                ws.onopen = () => {
+                    setConnectionStatus('connected');
+                    console.log('WebSocket connected');
+                };
+
+                ws.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    setLastMessage(message);
+                };
+
+                ws.onclose = () => {
+                    setConnectionStatus('disconnected');
+                    console.log('WebSocket disconnected');
+                };
+
+                ws.onerror = (error) => {
+                    setConnectionStatus('error');
+                    console.error('WebSocket error:', error);
+                };
+
+                setSocket(ws);
+
+                return () => {
+                    ws.close();
+                };
+            }, [url]);
+
+            const sendMessage = useCallback((message) => {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify(message));
+                }
+            }, [socket]);
+
+            return { socket, connectionStatus, lastMessage, sendMessage };
+        }
+
+        // Main App Component
+        function App() {
+            const [activeView, setActiveView] = useState('dashboard');
+            const [deviceStatus, setDeviceStatus] = useState(null);
+            const [logs, setLogs] = useState([]);
+            const [isLoading, setIsLoading] = useState(false);
+            const [perplexityStats, setPerplexityStats] = useState(null);
+            const [screenshotUrl, setScreenshotUrl] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [aiPrompt, setAiPrompt] = useState('');
+            const [systemMetrics, setSystemMetrics] = useState(null);
+            const [wsConnectionStatus, setWsConnectionStatus] = useState('disconnected');
+
+            // WebSocket connection
+            const { lastMessage, sendMessage } = useWebSocket('ws://localhost:8000/ws');
+
+            // Handle WebSocket messages
+            useEffect(() => {
+                if (lastMessage) {
+                    switch (lastMessage.type) {
+                        case 'connection_established':
+                            setWsConnectionStatus('connected');
+                            addLog('WebSocket connection established', 'success');
+                            // Subscribe to all topics
+                            sendMessage({ type: 'subscribe', topic: 'device_status' });
+                            sendMessage({ type: 'subscribe', topic: 'automation_logs' });
+                            sendMessage({ type: 'subscribe', topic: 'perplexity_updates' });
+                            sendMessage({ type: 'subscribe', topic: 'ai_responses' });
+                            sendMessage({ type: 'subscribe', topic: 'system_metrics' });
+                            break;
+
+                        case 'device_status_update':
+                            setDeviceStatus(lastMessage.data);
+                            addLog('Device status updated via WebSocket', 'info');
+                            break;
+
+                        case 'automation_log':
+                            addLog(`Automation: ${lastMessage.data.message || 'Activity logged'}`, 'info');
+                            break;
+
+                        case 'perplexity_update':
+                            addLog(`Perplexity: ${lastMessage.data.action || 'Update received'}`, 'info');
+                            break;
+
+                        case 'ai_response':
+                            addLog(`AI Response: ${lastMessage.data.provider || 'Provider'} responded`, 'success');
+                            break;
+
+                        case 'system_metrics':
+                            setSystemMetrics(lastMessage.data);
+                            break;
+
+                        case 'subscription_confirmed':
+                            addLog(`Subscribed to ${lastMessage.data.topic}`, 'success');
+                            break;
+
+                        default:
+                            addLog(`WebSocket: ${lastMessage.type}`, 'info');
+                    }
+                }
+            }, [lastMessage, sendMessage]);
+
+            // Add log entry
+            const addLog = useCallback((message, level = 'info') => {
+                const timestamp = new Date().toLocaleTimeString();
+                setLogs(prev => [...prev, { timestamp, message, level }]);
+            }, []);
+
+            // Fetch device status
+            const fetchDeviceStatus = useCallback(async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/android/status`, {
+                        headers: { 'X-API-Key': API_KEY }
+                    });
+                    const data = await response.json();
+                    setDeviceStatus(data);
+                    addLog(`Device status updated: ${data.connected ? 'Connected' : 'Disconnected'}`,
+                              data.connected ? 'success' : 'warning');
+                } catch (error) {
+                    addLog(`Failed to fetch device status: ${error.message}`, 'error');
+                }
+            }, []);
+
+            // Fetch Perplexity stats
+            const fetchPerplexityStats = useCallback(async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/analytics/perplexity`, {
+                        headers: { 'X-API-Key': API_KEY }
+                    });
+                    const data = await response.json();
+                    setPerplexityStats(data.perplexity_analytics);
+                } catch (error) {
+                    addLog(`Failed to fetch Perplexity stats: ${error.message}`, 'error');
+                }
+            }, []);
+
+            // Initialize
+            useEffect(() => {
+                fetchDeviceStatus();
+                fetchPerplexityStats();
+
+                // Poll device status every 30 seconds
+                const interval = setInterval(fetchDeviceStatus, 30000);
+                return () => clearInterval(interval);
+            }, [fetchDeviceStatus, fetchPerplexityStats]);
+
+            // Open Perplexity
+            const openPerplexity = async () => {
+                setIsLoading(true);
+                addLog('Opening Perplexity app...', 'info');
+                try {
+                    const response = await fetch(`${API_BASE}/api/perplexity/open`, {
+                        method: 'POST',
+                        headers: { 'X-API-Key': API_KEY }
+                    });
+                    const data = await response.json();
+                    addLog(`Perplexity opened: ${data.result.success ? 'Success' : 'Failed'}`,
+                              data.result.success ? 'success' : 'error');
+                } catch (error) {
+                    addLog(`Failed to open Perplexity: ${error.message}`, 'error');
+                }
+                setIsLoading(false);
+            };
+
+            // Search in Perplexity
+            const searchPerplexity = async () => {
+                if (!searchQuery.trim()) {
+                    addLog('Please enter a search query', 'warning');
+                    return;
+                }
+
+                setIsLoading(true);
+                addLog(`Searching Perplexity for: "${searchQuery}"`, 'info');
+
+                try {
+                    const response = await fetch(
+                        `${API_BASE}/api/perplexity/search?query=${encodeURIComponent(searchQuery)}`,
+                        {
+                            method: 'POST',
+                            headers: { 'X-API-Key': API_KEY }
+                        }
+                    );
+                    const data = await response.json();
+
+                    addLog(`Search completed: ${data.result.success ? 'Success' : 'Failed'}`,
+                              data.result.success ? 'success' : 'error');
+
+                    if (data.screenshot_taken) {
+                        // Note: In a real implementation, you'd fetch the screenshot
+                        setScreenshotUrl('/tmp/perplexity_screenshot.png');
+                    }
+                } catch (error) {
+                    addLog(`Search failed: ${error.message}`, 'error');
+                }
+                setIsLoading(false);
+            };
+
+            // Take screenshot
+            const takeScreenshot = async () => {
+                setIsLoading(true);
+                addLog('Taking screenshot...', 'info');
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/perplexity/screenshot`, {
+                        method: 'POST',
+                        headers: { 'X-API-Key': API_KEY }
+                    });
+                    const data = await response.json();
+
+                    if (data.result.success) {
+                        addLog('Screenshot captured successfully', 'success');
+                        setScreenshotUrl('/tmp/perplexity_screenshot.png');
+                    } else {
+                        addLog('Screenshot failed', 'error');
+                    }
+                } catch (error) {
+                    addLog(`Screenshot failed: ${error.message}`, 'error');
+                }
+                setIsLoading(false);
+            };
+
+            // Run comprehensive exploration
+            const runComprehensiveExploration = async () => {
+                setIsLoading(true);
+                addLog('Starting comprehensive Perplexity exploration...', 'info');
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/perplexity/comprehensive-exploration`, {
+                        method: 'POST',
+                        headers: { 'X-API-Key': API_KEY }
+                    });
+                    const data = await response.json();
+
+                    addLog(`Exploration completed: ${data.result.success ? 'Success' : 'Failed'}`,
+                              data.result.success ? 'success' : 'error');
+                } catch (error) {
+                    addLog(`Exploration failed: ${error.message}`, 'error');
+                }
+                setIsLoading(false);
+            };
+
+            // Generate AI response
+            const generateAIResponse = async () => {
+                if (!aiPrompt.trim()) {
+                    addLog('Please enter a prompt for the AI', 'warning');
+                    return;
+                }
+
+                setIsLoading(true);
+                addLog('Generating AI response...', 'info');
+
+                try {
+                    const response = await fetch(
+                        `${API_BASE}/api/ai/generate?prompt=${encodeURIComponent(aiPrompt)}`,
+                        {
+                            method: 'POST',
+                            headers: { 'X-API-Key': API_KEY }
+                        }
+                    );
+                    const data = await response.json();
+
+                    if (data.result.success) {
+                        addLog(`AI Response received from ${data.result.provider}`, 'success');
+                        addLog(`Response: ${data.result.response.substring(0, 100)}...`, 'info');
+                    } else {
+                        addLog('AI generation failed', 'error');
+                    }
+                } catch (error) {
+                    addLog(`AI generation failed: ${error.message}`, 'error');
+                }
+                setIsLoading(false);
+            };
+
+            // Navigation component
+            function Navigation() {
+                return (
+                    <div className="sidebar">
+                        <h1>🤖 ISH Chat</h1>
+
+                        {/* WebSocket Status Indicator */}
+                        <div style={{
+                            background: 'rgba(255,255,255,0.1)',
+                            padding: '10px',
+                            borderRadius: '8px',
+                            marginBottom: '20px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ fontSize: '12px', marginBottom: '5px' }}>Real-time Status</div>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px'
+                            }}>
+                                <div style={{
+                                    width: '10px',
+                                    height: '10px',
+                                    borderRadius: '50%',
+                                    backgroundColor: wsConnectionStatus === 'connected' ? '#4ade80' :
+                                                     wsConnectionStatus === 'error' ? '#f87171' : '#6b7280'
+                                }}></div>
+                                <span style={{ fontSize: '12px' }}>
+                                    {wsConnectionStatus === 'connected' ? 'Connected' :
+                                     wsConnectionStatus === 'error' ? 'Error' : 'Disconnected'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="nav-item" onClick={() => setActiveView('dashboard')}
+                             className={activeView === 'dashboard' ? 'active' : ''}>
+                            📊 Dashboard
+                        </div>
+                        <div className="nav-item" onClick={() => setActiveView('perplexity')}
+                             className={activeView === 'perplexity' ? 'active' : ''}>
+                            🔍 Perplexity
+                        </div>
+                        <div className="nav-item" onClick={() => setActiveView('ai')}
+                             className={activeView === 'ai' ? 'active' : ''}>
+                            🧠 AI Assistant
+                        </div>
+                        <div className="nav-item" onClick={() => setActiveView('logs')}
+                             className={activeView === 'logs' ? 'active' : ''}>
+                            📝 Logs
+                        </div>
+                    </div>
+                );
+            }
+
+            // Dashboard View
+            function DashboardView() {
+                return (
+                    <div>
+                        <div className="card">
+                            <h2>📊 System Status</h2>
+                            <div className="status-grid">
+                                <div className="status-item">
+                                    <h3>Android Device</h3>
+                                    <div className="value">
+                                        {deviceStatus ? (deviceStatus.connected ? '✅ Connected' : '❌ Disconnected') : 'Loading...'}
+                                    </div>
+                                </div>
+                                {deviceStatus && deviceStatus.connected && (
+                                    <>
+                                        <div className="status-item success">
+                                            <h3>Battery</h3>
+                                            <div className="value">{deviceStatus.battery}</div>
+                                        </div>
+                                        <div className="status-item">
+                                            <h3>Model</h3>
+                                            <div className="value">{deviceStatus.model}</div>
+                                        </div>
+                                    </>
+                                )}
+                                <div className="status-item">
+                                    <h3>AI Providers</h3>
+                                    <div className="value">3 Available</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* System Metrics */}
+                        {systemMetrics && (
+                            <div className="card">
+                                <h2>📊 System Metrics (Real-time)</h2>
+                                <div className="metrics-grid">
+                                    <div className="metric-card">
+                                        <h4>Active Sessions</h4>
+                                        <div className="metric-value">{systemMetrics.active_sessions}</div>
+                                    </div>
+                                    <div className="metric-card">
+                                        <h4>WebSocket Connections</h4>
+                                        <div className="metric-value">{systemMetrics.websocket_connections}</div>
+                                    </div>
+                                    <div className="metric-card">
+                                        <h4>System Uptime</h4>
+                                        <div className="metric-value">{Math.floor(systemMetrics.uptime / 3600)}h</div>
+                                    </div>
+                                    <div className="metric-card">
+                                        <h4>CPU Usage</h4>
+                                        <div className="metric-value">{systemMetrics.cpu_usage}%</div>
+                                    </div>
+                                    <div className="metric-card">
+                                        <h4>Memory Usage</h4>
+                                        <div className="metric-value">{systemMetrics.memory_usage}%</div>
+                                    </div>
+                                </div>
+                                <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+                                    Last updated: {new Date(systemMetrics.timestamp || Date.now()).toLocaleTimeString()}
+                                </div>
+                            </div>
+                        )}
+
+                        {perplexityStats && (
+                            <div className="card">
+                                <h2>📈 Perplexity Analytics</h2>
+                                <div className="metrics-grid">
+                                    <div className="metric-card">
+                                        <h4>Total Queries</h4>
+                                        <div className="metric-value">{perplexityStats.total_queries}</div>
+                                    </div>
+                                    <div className="metric-card">
+                                        <h4>Avg Response Time</h4>
+                                        <div className="metric-value">{perplexity_stats.average_response_time}s</div>
+                                    </div>
+                                    <div className="metric-card">
+                                        <h4>Models Used</h4>
+                                        <div className="metric-value">{perplexityStats.models_used.length}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="card">
+                            <h2>🚀 Quick Actions</h2>
+                            <div className="button-group">
+                                <button className="button" onClick={openPerplexity} disabled={isLoading}>
+                                    Open Perplexity
+                                </button>
+                                <button className="button" onClick={takeScreenshot} disabled={isLoading}>
+                                    📸 Screenshot
+                                </button>
+                                <button className="button" onClick={runComprehensiveExploration} disabled={isLoading}>
+                                    🔍 Explore App
+                                </button>
+                            </div>
+                            {screenshotUrl && (
+                                <img src={screenshotUrl} alt="Latest Screenshot" className="screenshot-preview" />
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+
+            // Perplexity View
+            function PerplexityView() {
+                return (
+                    <div>
+                        <div className="card">
+                            <h2>🔍 Perplexity Control</h2>
+
+                            <div className="form-group">
+                                <label>Search Query</label>
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Enter your search query..."
+                                    onKeyPress={(e) => e.key === 'Enter' && searchPerplexity()}
+                                />
+                            </div>
+
+                            <div className="button-group">
+                                <button className="button" onClick={searchPerplexity} disabled={isLoading}>
+                                    🔍 Search
+                                </button>
+                                <button className="button" onClick={openPerplexity} disabled={isLoading}>
+                                    📱 Open App
+                                </button>
+                                <button className="button" onClick={takeScreenshot} disabled={isLoading}>
+                                    📸 Screenshot
+                                </button>
+                                <button className="button" onClick={runComprehensiveExploration} disabled={isLoading}>
+                                    🔬 Explore Models
+                                </button>
+                            </div>
+
+                            {screenshotUrl && (
+                                <div>
+                                    <h3>Latest Screenshot</h3>
+                                    <img src={screenshotUrl} alt="Perplexity Screenshot" className="screenshot-preview" />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="card">
+                            <h2>📱 Device Status</h2>
+                            {deviceStatus ? (
+                                <div>
+                                    <p><strong>Status:</strong>
+                                        <span className={deviceStatus.connected ? 'status-item success' : 'status-item error'}>
+                                            {deviceStatus.connected ? 'Connected' : 'Disconnected'}
+                                        </span>
+                                    </p>
+                                    {deviceStatus.connected && (
+                                        <>
+                                            <p><strong>Model:</strong> {deviceStatus.model}</p>
+                                            <p><strong>Battery:</strong> {deviceStatus.battery}</p>
+                                            <p><strong>Android:</strong> {deviceStatus.android_version}</p>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <p>Loading device status...</p>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+
+            // AI Assistant View
+            function AIView() {
+                return (
+                    <div>
+                        <div className="card">
+                            <h2>🧠 AI Assistant</h2>
+
+                            <div className="form-group">
+                                <label>Prompt for AI Assistant</label>
+                                <textarea
+                                    value={aiPrompt}
+                                    onChange={(e) => setAiPrompt(e.target.value)}
+                                    placeholder="Ask me anything about Android automation, suggest commands, or get help with your tasks..."
+                                />
+                            </div>
+
+                            <button className="button" onClick={generateAIResponse} disabled={isLoading}>
+                                💡 Generate Response
+                            </button>
+                        </div>
+
+                        <div className="card">
+                            <h2>🔧 Suggested Automations</h2>
+                            <div className="button-group">
+                                <button className="button" onClick={() => setAiPrompt("Take a screenshot of the current screen")}>
+                                    📸 Take Screenshot
+                                </button>
+                                <button className="button" onClick={() => setAiPrompt("Check battery level and device status")}>
+                                    🔋 Check Battery
+                                </button>
+                                <button className="button" onClick={() => setAiPrompt("Open the camera app and take a photo")}>
+                                    📷 Open Camera
+                                </button>
+                                <button className="button" onClick={() => setAiPrompt("Search in Perplexity for latest tech news")}>
+                                    🔍 Tech News
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Logs View
+            function LogsView() {
+                return (
+                    <div className="card">
+                        <h2>📝 Activity Logs</h2>
+                        <div className="log-container">
+                            {logs.map((log, index) => (
+                                <div key={index} className="log-entry">
+                                    <span className="log-timestamp">{log.timestamp}</span>
+                                    <span className={`log-level ${log.level}`}>{log.level.toUpperCase()}</span>
+                                    <span>{log.message}</span>
+                                </div>
+                            ))}
+                            {logs.length === 0 && <div className="log-entry">No logs yet...</div>}
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="dashboard">
+                    <Navigation />
+                    <div className="main-content">
+                        {activeView === 'dashboard' && <DashboardView />}
+                        {activeView === 'perplexity' && <PerplexityView />}
+                        {activeView === 'ai' && <AIView />}
+                        {activeView === 'logs' && <LogsView />}
+                    </div>
+                    {isLoading && (
+                        <div style={{
+                            position: 'fixed',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            background: 'rgba(0,0,0,0.8)',
+                            color: 'white',
+                            padding: '20px',
+                            borderRadius: '8px',
+                            zIndex: 1000
+                        }}>
+                            Processing...
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+name: ishchat_remote
+description: ISH Chat Integration Remote Control Mobile App
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+
+  # HTTP and networking
+  http: ^1.1.0
+  dio: ^5.3.2
+
+  # WebSocket support
+  web_socket_channel: ^2.4.0
+
+  # State management
+  provider: ^6.0.5
+
+  # UI components
+  flutter/material.dart: sdk
+  flutter_svg: ^2.0.7
+
+  # Local storage
+  shared_preferences: ^2.2.1
+
+  # JSON serialization
+  json_annotation: ^4.8.1
+
+  # Voice recording
+  record: ^5.0.4
+  path_provider: ^2.1.1
+
+  # Permission handling
+  permission_handler: ^11.0.1
+
+  # Device info
+  device_info_plus: ^9.1.0
+
+  # Package info
+  package_info_plus: ^4.2.0
+
+  # Icons
+  flutter_feather_icons: ^2.0.0+1
+
+  # Utils
+  uuid: ^4.1.0
+  intl: ^0.18.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.7
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700

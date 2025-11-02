@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  ishchat-proxy:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - BACKEND_API_KEY=${BACKEND_API_KEY:-change-this-to-a-secure-random-key}
+      - ISHCHAT_API_URL=${ISHCHAT_API_URL:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./src:/app/src
