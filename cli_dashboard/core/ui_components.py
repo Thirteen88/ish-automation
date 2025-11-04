@@ -113,8 +113,8 @@ class DashboardUI(BaseDashboardUI):
 
     def _create_header(self, data: DashboardData, last_update: datetime, perf_stats: Dict[str, Any]) -> Panel:
         """Create header panel"""
-        title = "[bold blue]ISH Chat CLI Dashboard[/bold blue]"
-        subtitle = f"Multi-Instance AI System Monitoring - Last Update: {last_update.strftime('%H:%M:%S')}"
+        title = "[bold blue]88 3ee AI Dashboard[/bold blue]"
+        subtitle = f"Multi-Instance AI Platform by Thirteen 88 - Last Update: {last_update.strftime('%H:%M:%S')}"
 
         if perf_stats:
             perf_text = f"Updates: {perf_stats.get('total_updates', 0)} | Success Rate: {perf_stats.get('success_rate', 0):.1f}% | Avg Update: {perf_stats.get('avg_update_time', 0):.3f}s"
@@ -398,7 +398,7 @@ class BasicDashboardUI(BaseDashboardUI):
 
         # Header
         output.append("=" * 80)
-        output.append("ISH Chat CLI Dashboard - Multi-Instance AI System Monitoring")
+        output.append("88 3ee AI Dashboard - Multi-Instance AI Platform by Thirteen 88")
         output.append(f"Last Update: {last_update.strftime('%Y-%m-%d %H:%M:%S')}")
         output.append("=" * 80)
         output.append("")

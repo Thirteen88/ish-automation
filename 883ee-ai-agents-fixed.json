@@ -1,0 +1,117 @@
+{
+  "orchestration_id": "883ee-ai-agents-2025-11-04",
+  "task_description": "Deploy specialized AI agents for 88 3ee multi-instance platform",
+  "sub_agents": [
+    {
+      "agent_id": "monitoring-agent",
+      "agent_role": "System Monitoring Specialist",
+      "objective": "Monitor real-time performance of all 88 3ee AI instances",
+      "scope": {
+        "files": ["src/monitoring/*", "cli_dashboard/*"],
+        "directories": ["/home/gary/multi-model-orchestrator/ish-chat-backend"],
+        "boundaries": "Read-only monitoring, no system modifications"
+      },
+      "context": {
+        "background": "88 3ee AI platform running 4 AI providers (ZAI, OpenAI, Claude, Perplexity)",
+        "constraints": ["Real-time monitoring only", "Report performance metrics", "Alert on issues"]
+      },
+      "instructions": [
+        "Check current system status via API endpoints",
+        "Monitor CLI dashboard performance",
+        "Analyze response times and success rates",
+        "Generate performance report",
+        "Identify optimization opportunities"
+      ],
+      "output_format": {
+        "type": "json",
+        "schema": {
+          "system_status": "object",
+          "performance_metrics": "object",
+          "alerts": "array",
+          "recommendations": "array"
+        }
+      },
+      "success_criteria": [
+        "Successfully connect to all monitoring endpoints",
+        "Generate comprehensive performance report",
+        "Identify at least 3 optimization opportunities"
+      ],
+      "token_budget": 15000,
+      "timeout": "5 minutes"
+    },
+    {
+      "agent_id": "research-agent",
+      "agent_role": "AI Research Analyst",
+      "objective": "Research and analyze AI model performance across providers",
+      "scope": {
+        "files": ["src/ai_providers/*", "src/intelligent_router.py"],
+        "directories": ["/home/gary/multi-model-orchestrator/ish-chat-backend"],
+        "boundaries": "Analyze existing AI provider configurations"
+      },
+      "context": {
+        "background": "88 3ee AI uses multiple AI providers with intelligent routing",
+        "constraints": ["Analyze current configurations", "Research optimization strategies"]
+      },
+      "instructions": [
+        "Analyze current AI provider configurations",
+        "Research model performance characteristics",
+        "Evaluate routing logic effectiveness",
+        "Benchmark provider capabilities",
+        "Suggest provider optimizations"
+      ],
+      "output_format": {
+        "type": "json",
+        "schema": {
+          "provider_analysis": "object",
+          "performance_benchmarks": "object",
+          "routing_efficiency": "object",
+          "optimization_suggestions": "array"
+        }
+      },
+      "success_criteria": [
+        "Complete provider configuration analysis",
+        "Generate performance benchmarks",
+        "Provide actionable optimization suggestions"
+      ],
+      "token_budget": 15000,
+      "timeout": "5 minutes"
+    },
+    {
+      "agent_id": "security-agent",
+      "agent_role": "Security Auditor",
+      "objective": "Audit security configurations across 88 3ee AI platform",
+      "scope": {
+        "files": ["src/security/*", "src/auth/*", "docker-infrastructure/*"],
+        "directories": ["/home/gary/multi-model-orchestrator/ish-chat-backend"],
+        "boundaries": "Security analysis only, no security changes"
+      },
+      "context": {
+        "background": "88 3ee AI platform with API authentication and container security",
+        "constraints": ["Read-only security audit", "Identify vulnerabilities", "Suggest improvements"]
+      },
+      "instructions": [
+        "Audit API authentication mechanisms",
+        "Review Docker security configurations",
+        "Analyze data encryption practices",
+        "Check for security vulnerabilities",
+        "Generate security recommendations"
+      ],
+      "output_format": {
+        "type": "json",
+        "schema": {
+          "security_audit": "object",
+          "vulnerabilities": "array",
+          "compliance_status": "object",
+          "security_recommendations": "array"
+        }
+      },
+      "success_criteria": [
+        "Complete security audit of all components",
+        "Identify potential security issues",
+        "Provide actionable security improvements"
+      ],
+      "token_budget": 15000,
+      "timeout": "5 minutes"
+    }
+  ]
+}

@@ -1,0 +1,228 @@
+{
+  "orchestration_id": "883ee-ai-agents-" + new Date().toISOString(),
+  "task_description": "Deploy specialized AI agents for 88 3ee multi-instance platform",
+  "sub_agents": [
+    {
+      "agent_id": "monitoring-agent",
+      "agent_role": "System Monitoring Specialist",
+      "objective": "Monitor real-time performance of all 88 3ee AI instances",
+      "scope": {
+        "files": ["src/monitoring/*", "cli_dashboard/*"],
+        "directories": ["/home/gary/multi-model-orchestrator/ish-chat-backend"],
+        "boundaries": "Read-only monitoring, no system modifications"
+      },
+      "context": {
+        "background": "88 3ee AI platform running 4 AI providers (ZAI, OpenAI, Claude, Perplexity)",
+        "constraints": ["Real-time monitoring only", "Report performance metrics", "Alert on issues"]
+      },
+      "instructions": [
+        "Check current system status via API endpoints",
+        "Monitor CLI dashboard performance",
+        "Analyze response times and success rates",
+        "Generate performance report",
+        "Identify optimization opportunities"
+      ],
+      "output_format": {
+        "type": "json",
+        "schema": {
+          "system_status": "object",
+          "performance_metrics": "object",
+          "alerts": "array",
+          "recommendations": "array"
+        }
+      },
+      "success_criteria": [
+        "Successfully connect to all monitoring endpoints",
+        "Generate comprehensive performance report",
+        "Identify at least 3 optimization opportunities"
+      ],
+      "token_budget": 15000,
+      "timeout": "5 minutes"
+    },
+    {
+      "agent_id": "research-agent",
+      "agent_role": "AI Research Analyst",
+      "objective": "Research and analyze AI model performance across providers",
+      "scope": {
+        "files": ["src/ai_providers/*", "src/intelligent_router.py"],
+        "directories": ["/home/gary/multi-model-orchestrator/ish-chat-backend"],
+        "boundaries": "Analyze existing AI provider configurations"
+      },
+      "context": {
+        "background": "88 3ee AI uses multiple AI providers with intelligent routing",
+        "constraints": ["Analyze current configurations", "Research optimization strategies"]
+      },
+      "instructions": [
+        "Analyze current AI provider configurations",
+        "Research model performance characteristics",
+        "Evaluate routing logic effectiveness",
+        "Benchmark provider capabilities",
+        "Suggest provider optimizations"
+      ],
+      "output_format": {
+        "type": "json",
+        "schema": {
+          "provider_analysis": "object",
+          "performance_benchmarks": "object",
+          "routing_efficiency": "object",
+          "optimization_suggestions": "array"
+        }
+      },
+      "success_criteria": [
+        "Complete provider configuration analysis",
+        "Generate performance benchmarks",
+        "Provide actionable optimization suggestions"
+      ],
+      "token_budget": 15000,
+      "timeout": "5 minutes"
+    },
+    {
+      "agent_id": "security-agent",
+      "agent_role": "Security Auditor",
+      "objective": "Audit security configurations across 88 3ee AI platform",
+      "scope": {
+        "files": ["src/security/*", "src/auth/*", "docker-infrastructure/*"],
+        "directories": ["/home/gary/multi-model-orchestrator/ish-chat-backend"],
+        "boundaries": "Security analysis only, no security changes"
+      },
+      "context": {
+        "background": "88 3ee AI platform with API authentication and container security",
+        "constraints": ["Read-only security audit", "Identify vulnerabilities", "Suggest improvements"]
+      },
+      "instructions": [
+        "Audit API authentication mechanisms",
+        "Review Docker security configurations",
+        "Analyze data encryption practices",
+        "Check for security vulnerabilities",
+        "Generate security recommendations"
+      ],
+      "output_format": {
+        "type": "json",
+        "schema": {
+          "security_audit": "object",
+          "vulnerabilities": "array",
+          "compliance_status": "object",
+          "security_recommendations": "array"
+        }
+      },
+      "success_criteria": [
+        "Complete security audit of all components",
+        "Identify potential security issues",
+        "Provide actionable security improvements"
+      ],
+      "token_budget": 15000,
+      "timeout": "5 minutes"
+    },
+    {
+      "agent_id": "performance-agent",
+      "agent_role": "Performance Optimization Specialist",
+      "objective": "Analyze and optimize 88 3ee AI platform performance",
+      "scope": {
+        "files": ["src/caching/*", "src/load_balancer/*", "src/database/*"],
+        "directories": ["/home/gary/multi-model-orchestrator/ish-chat-backend"],
+        "boundaries": "Performance analysis and optimization suggestions"
+      },
+      "context": {
+        "background": "88 3ee AI with multi-level caching and load balancing",
+        "constraints": ["Analyze performance bottlenecks", "Suggest optimizations"]
+      },
+      "instructions": [
+        "Analyze caching layer effectiveness",
+        "Review load balancing configurations",
+        "Evaluate database query performance",
+        "Identify performance bottlenecks",
+        "Generate optimization plan"
+      ],
+      "output_format": {
+        "type": "json",
+        "schema": {
+          "performance_analysis": "object",
+          "bottlenecks": "array",
+          "optimization_plan": "object",
+          "expected_improvements": "object"
+        }
+      },
+      "success_criteria": [
+        "Complete performance analysis",
+        "Identify top 3 bottlenecks",
+        "Create detailed optimization roadmap"
+      ],
+      "token_budget": 15000,
+      "timeout": "5 minutes"
+    },
+    {
+      "agent_id": "automation-agent",
+      "agent_role": "Android Automation Specialist",
+      "objective": "Test and validate Android automation capabilities",
+      "scope": {
+        "files": ["src/android_automation/*", "src/adb_bridge/*"],
+        "directories": ["/home/gary/multi-model-orchestrator/ish-chat-backend"],
+        "boundaries": "Test existing automation, no device modifications"
+      },
+      "context": {
+        "background": "88 3ee AI with Android device automation via ADB",
+        "constraints": ["Test automation capabilities", "Validate device connections"]
+      },
+      "instructions": [
+        "Test Android device connection",
+        "Validate ADB command execution",
+        "Test automation workflows",
+        "Verify Perplexity app integration",
+        "Generate automation report"
+      ],
+      "output_format": {
+        "type": "json",
+        "schema": {
+          "device_status": "object",
+          "automation_tests": "array",
+          "adb_capabilities": "object",
+          "integration_status": "object"
+        }
+      },
+      "success_criteria": [
+        "Successfully test device connectivity",
+        "Validate automation workflows",
+        "Complete integration testing"
+      ],
+      "token_budget": 15000,
+      "timeout": "5 minutes"
+    },
+    {
+      "agent_id": "documentation-agent",
+      "agent_role": "Technical Documentation Specialist",
+      "objective": "Create comprehensive documentation for 88 3ee AI platform",
+      "scope": {
+        "files": ["*.md", "docs/*", "README*"],
+        "directories": ["/home/gary/multi-model-orchestrator/ish-chat-backend"],
+        "boundaries": "Documentation analysis and improvement suggestions"
+      },
+      "context": {
+        "background": "88 3ee AI multi-instance platform with comprehensive documentation",
+        "constraints": ["Review existing docs", "Suggest improvements", "Create user guides"]
+      },
+      "instructions": [
+        "Review current documentation quality",
+        "Analyze API documentation completeness",
+        "Check user guide accuracy",
+        "Identify documentation gaps",
+        "Create improvement recommendations"
+      ],
+      "output_format": {
+        "type": "json",
+        "schema": {
+          "documentation_review": "object",
+          "completeness_analysis": "object",
+          "quality_assessment": "object",
+          "improvement_plan": "object"
+        }
+      },
+      "success_criteria": [
+        "Complete documentation audit",
+        "Assess quality metrics",
+        "Provide actionable improvement plan"
+      ],
+      "token_budget": 15000,
+      "timeout": "5 minutes"
+    }
+  ]
+}

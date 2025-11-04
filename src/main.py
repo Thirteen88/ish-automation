@@ -1,6 +1,6 @@
 """
-ish.chat Backend Proxy
-FastAPI-based relay server for chat messages
+88 3ee AI Backend Proxy
+FastAPI-based multi-instance AI server for intelligent query routing
 """
 import os
 import logging
@@ -353,16 +353,17 @@ class RelayResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifecycle"""
-    logger.info("Starting ish.chat proxy server")
+    logger.info("Starting 88 3ee AI multi-instance platform")
     app.state.http_client = httpx.AsyncClient(timeout=config.ISHCHAT_TIMEOUT)
     yield
-    logger.info("Shutting down ish.chat proxy server")
+    logger.info("Shutting down 88 3ee AI platform")
     await app.state.http_client.aclose()
 
 # Create FastAPI app
 app = FastAPI(
-    title="ish.chat Proxy API",
+    title="88 3ee AI - Multi-Instance AI Platform",
     version="1.0.0",
+    description="Enterprise-grade multi-instance AI system powered by Thirteen 88",
     lifespan=lifespan
 )
 
