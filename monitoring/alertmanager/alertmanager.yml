@@ -1,0 +1,376 @@
+# AlertManager Configuration for ISH Chat System
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@ish-chat.local'
+  smtp_auth_username: 'alerts@ish-chat.local'
+  smtp_auth_password: 'your-smtp-password'
+  
+  # Default templates
+  templates:
+    - '/etc/alertmanager/templates/*.tmpl'
+
+# Route configuration
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default-receiver'
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 0s
+      group_interval: 0s
+      repeat_interval: 5m
+      routes:
+        # System critical alerts
+        - match:
+            service: 'instance-manager'
+          receiver: 'instance-manager-critical'
+        - match:
+            service: 'intelligent-router'
+          receiver: 'router-critical'
+        - match:
+            service: 'load-balancer'
+          receiver: 'load-balancer-critical'
+        - match:
+            service: 'database'
+          receiver: 'database-critical'
+        - match:
+            service: 'monitoring'
+          receiver: 'monitoring-critical'
+
+    # Warning alerts - standard notification
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 2h
+      routes:
+        # Performance warnings
+        - match:
+            service: 'performance-kpi'
+          receiver: 'performance-warnings'
+        # Cost warnings
+        - match:
+            service: 'cost-management'
+          receiver: 'cost-warnings'
+
+    # Info alerts - aggregated notification
+    - match:
+        severity: info
+      receiver: 'info-alerts'
+      group_wait: 5m
+      group_interval: 30m
+      repeat_interval: 24h
+
+    # Business KPI alerts
+    - match:
+        service: 'business-kpi'
+      receiver: 'business-alerts'
+      group_wait: 1m
+      group_interval: 5m
+      repeat_interval: 1h
+
+    # SLO alerts
+    - match:
+        service: 'slo-monitoring'
+      receiver: 'slo-alerts'
+      group_wait: 0s
+      group_interval: 0s
+      repeat_interval: 15m
+
+# Inhibit rules to prevent alert spam
+inhibit_rules:
+  # Inhibit warning alerts if critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+
+  # Inhibit instance-specific alerts if the whole service is down
+  - source_match:
+      alertname: 'InstanceManagerDown'
+    target_match_re:
+      service: 'instance-manager.*'
+    equal: ['instance']
+
+  # Inhibit provider alerts if the provider is down
+  - source_match:
+      alertname: 'ProviderUnhealthy'
+    target_match_re:
+      service: 'provider-.*'
+    equal: ['provider_type']
+
+# Receivers configuration
+receivers:
+  # Default receiver
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'admin@ish-chat.local'
+        subject: '[ISH Chat] {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+          {{ end }}
+        headers:
+          X-Priority: '3'
+
+  # Critical alerts receiver
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'oncall@ish-chat.local,devops@ish-chat.local'
+        subject: '[CRITICAL] ISH Chat: {{ .GroupLabels.alertname }}'
+        body: |
+          🚨 CRITICAL ALERT 🚨
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Instance: {{ .Labels.instance }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          Runbook: https://wiki.ish-chat.local/runbooks/{{ .Labels.alertname }}
+          {{ end }}
+        headers:
+          X-Priority: '1'
+          X-MSMail-Priority: 'High'
+          X-Alert: 'Critical'
+    
+    # Slack webhook for critical alerts
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-critical'
+        title: '🚨 Critical Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Service:* {{ .Labels.service }}
+          *Instance:* {{ .Labels.instance }}
+          *Runbook:* https://wiki.ish-chat.local/runbooks/{{ .Labels.alertname }}
+          {{ end }}
+        send_resolved: true
+        icon_emoji: ':rotating_light:'
+        color: 'danger'
+
+  # Instance Manager critical alerts
+  - name: 'instance-manager-critical'
+    email_configs:
+      - to: 'instance-team@ish-chat.local,oncall@ish-chat.local'
+        subject: '[CRITICAL][INSTANCE-MANAGER] {{ .GroupLabels.alertname }}'
+        body: |
+          INSTANCE MANAGER CRITICAL ALERT
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Provider: {{ .Labels.provider_type }}
+          Instance: {{ .Labels.instance_id }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          Immediate Action Required:
+          1. Check instance manager logs
+          2. Verify provider connectivity
+          3. Check auto-scaling status
+          {{ end }}
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#instance-alerts'
+        title: '🚨 Instance Manager Critical'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          Provider: {{ .Labels.provider_type }}
+          {{ end }}
+        send_resolved: true
+        color: 'danger'
+
+  # Router critical alerts
+  - name: 'router-critical'
+    email_configs:
+      - to: 'router-team@ish-chat.local,oncall@ish-chat.local'
+        subject: '[CRITICAL][ROUTER] {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#router-alerts'
+        title: '🚨 Router Critical Alert'
+        send_resolved: true
+        color: 'danger'
+
+  # Load Balancer critical alerts
+  - name: 'load-balancer-critical'
+    email_configs:
+      - to: 'infra-team@ish-chat.local,oncall@ish-chat.local'
+        subject: '[CRITICAL][LOAD-BALANCER] {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#infra-alerts'
+        title: '🚨 Load Balancer Critical Alert'
+        send_resolved: true
+        color: 'danger'
+
+  # Database critical alerts
+  - name: 'database-critical'
+    email_configs:
+      - to: 'dba-team@ish-chat.local,oncall@ish-chat.local'
+        subject: '[CRITICAL][DATABASE] {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#db-alerts'
+        title: '🚨 Database Critical Alert'
+        send_resolved: true
+        color: 'danger'
+
+  # Monitoring critical alerts
+  - name: 'monitoring-critical'
+    email_configs:
+      - to: 'monitoring-team@ish-chat.local,devops@ish-chat.local'
+        subject: '[CRITICAL][MONITORING] {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#monitoring-alerts'
+        title: '🚨 Monitoring System Critical Alert'
+        send_resolved: true
+        color: 'danger'
+
+  # Warning alerts receiver
+  - name: 'warning-alerts'
+    email_configs:
+      - to: 'alerts@ish-chat.local'
+        subject: '[WARNING] ISH Chat: {{ .GroupLabels.alertname }}'
+        body: |
+          ⚠️ WARNING ALERT
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Service: {{ .Labels.service }}
+          Instance: {{ .Labels.instance }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+        headers:
+          X-Priority: '3'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-warning'
+        title: '⚠️ Warning Alert: {{ .GroupLabels.alertname }}'
+        send_resolved: true
+        color: 'warning'
+
+  # Performance warnings
+  - name: 'performance-warnings'
+    email_configs:
+      - to: 'performance-team@ish-chat.local'
+        subject: '[PERFORMANCE WARNING] {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#performance'
+        title: '📈 Performance Warning'
+        send_resolved: true
+        color: 'warning'
+
+  # Cost warnings
+  - name: 'cost-warnings'
+    email_configs:
+      - to: 'finance-team@ish-chat.local,devops@ish-chat.local'
+        subject: '[COST WARNING] {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#cost-alerts'
+        title: '💰 Cost Warning'
+        send_resolved: true
+        color: 'warning'
+
+  # Info alerts receiver
+  - name: 'info-alerts'
+    email_configs:
+      - to: 'info-alerts@ish-chat.local'
+        subject: '[INFO] ISH Chat: {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-info'
+        title: 'ℹ️ Info Alert: {{ .GroupLabels.alertname }}'
+        send_resolved: true
+        color: 'good'
+
+  # Business alerts
+  - name: 'business-alerts'
+    email_configs:
+      - to: 'business-team@ish-chat.local,product-team@ish-chat.local'
+        subject: '[BUSINESS KPI] {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#business-metrics'
+        title: '📊 Business KPI Alert'
+        send_resolved: true
+        color: 'warning'
+
+  # SLO alerts
+  - name: 'slo-alerts'
+    email_configs:
+      - to: 'reliability-team@ish-chat.local,oncall@ish-chat.local'
+        subject: '[SLO BREACH] {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#slo-alerts'
+        title: '🎯 SLO Alert: {{ .GroupLabels.alertname }}'
+        send_resolved: true
+        color: 'danger'
+
+# Time intervals for special handling
+time_intervals:
+  # Business hours
+  - name: 'business-hours'
+    time_intervals:
+      - times:
+          - start_time: '09:00'
+            end_time: '17:00'
+        weekdays: ['monday:friday']
+        location: 'UTC'
+
+  # After hours
+  - name: 'after-hours'
+    time_intervals:
+      - times:
+          - start_time: '17:01'
+            end_time: '08:59'
+        weekdays: ['monday:friday']
+        location: 'UTC'
+      - weekdays: ['saturday', 'sunday']
+        location: 'UTC'
+
+# Mute timing configurations
+mute_time_intervals:
+  # Maintenance window
+  - name: 'maintenance-window'
+    time_intervals:
+      - start_time: '2024-01-01T02:00:00Z'
+        end_time: '2024-01-01T04:00:00Z'
+  
+  # Weekends (lower severity alerts only)
+  - name: 'weekend-muting'
+    time_intervals:
+      - weekdays: ['saturday', 'sunday']
+    matcher:
+      severity: 'info'

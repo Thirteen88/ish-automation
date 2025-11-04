@@ -1,0 +1,38 @@
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres-primary:5432
+    database: ish_chat
+    user: postgres
+    password: ${POSTGRES_PASSWORD}
+    isDefault: false
+    jsonData:
+      sslmode: disable
+    editable: true
+
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+
+  - name: HAProxy
+    type: prometheus
+    access: proxy
+    url: http://haproxy:8404
+    database: proxy-stats
+    isDefault: false
+    editable: true
+
+  - name: Redis
+    type: redis
+    access: proxy
+    url: redis://redis:6379
+    database: 0
+    password: ${REDIS_PASSWORD}
+    isDefault: false
+    editable: true

@@ -1,0 +1,356 @@
+# ISH Chat Load Balancer and Intelligent Router Alert Rules
+groups:
+- name: load_balancer_health
+  rules:
+  # Load Balancer Health Alerts
+  - alert: LoadBalancerDown
+    expr: up{job="ish-chat-load-balancer"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: load-balancer
+    annotations:
+      summary: "Load Balancer is down"
+      description: "Load Balancer on {{ $labels.instance }} is down"
+
+  - alert: IntelligentRouterDown
+    expr: up{job="ish-chat-intelligent-router"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: intelligent-router
+    alerts:
+      summary: "Intelligent Router is down"
+      description: "Intelligent Router on {{ $labels.instance }} is down"
+
+  # Failover Alerts
+  - alert: HighFailoverRate
+    expr: rate(instance_manager_load_balancer_failovers_total[5m]) > 0.1
+    for: 3m
+    labels:
+      severity: warning
+      service: failover
+    annotations:
+      summary: "High failover rate detected"
+      description: "Failover rate is {{ $value | humanize }} per minute for {{ $labels.provider_type }}:{{ $labels.model_name }}"
+
+  - alert: CriticalFailoverRate
+    expr: rate(instance_manager_load_balancer_failovers_total[5m]) > 0.5
+    for: 1m
+    labels:
+      severity: critical
+      service: failover
+    annotations:
+      summary: "Critical failover rate detected"
+      description: "Critical failover rate {{ $value | humanize }} per minute for {{ $labels.provider_type }}:{{ $labels.model_name }}"
+
+  - alert: FailoverStorm
+    expr: increase(instance_manager_load_balancer_failovers_total[1m]) > 5
+    for: 0m
+    labels:
+      severity: critical
+      service: failover
+    annotations:
+      summary: "Failover storm detected"
+      description: "{{ $value }} failovers in the last minute for {{ $labels.provider_type }}"
+
+  # Load Balancing Strategy Alerts
+  - alert: LoadBalancingStrategyIneffective
+    expr: histogram_quantile(0.95, rate(instance_manager_request_duration_seconds_bucket[5m])) > 8.0
+    for: 5m
+    labels:
+      severity: warning
+      service: load-balancer
+    annotations:
+      summary: "Load balancing strategy ineffective"
+      description: "Load balancing strategy {{ $labels.strategy }} is performing poorly for {{ $labels.provider_type }}"
+
+  - alert: UnevenInstanceSelection
+    expr: count(instance_manager_load_balancer_selections_total) by (strategy) > 0
+    for: 10m
+    labels:
+      severity: info
+      service: load-balancer
+    annotations:
+      summary: "Uneven instance selection pattern"
+      description: "Load balancing strategy {{ $labels.strategy }} shows uneven selection across instances"
+
+  # Routing Performance Alerts
+  - alert: RoutingDecisionLatencyHigh
+    expr: histogram_quantile(0.95, rate(router_routing_decision_duration_seconds_bucket[5m])) > 0.1
+    for: 5m
+    labels:
+      severity: warning
+      service: intelligent-router
+    annotations:
+      summary: "High routing decision latency"
+      description: "95th percentile routing decision time is {{ $value }}s for {{ $labels.provider_type }}"
+
+  - alert: RoutingDecisionFailure
+    expr: rate(router_routing_decisions_total{status="failed"}[5m]) / rate(router_routing_decisions_total[5m]) > 0.05
+    for: 3m
+    labels:
+      severity: warning
+      service: intelligent-router
+    annotations:
+      summary: "Routing decision failures"
+      description: "Routing decision failure rate is {{ $value | humanizePercentage }} for {{ $labels.provider_type }}"
+
+  - alert: NoAvailableRoutes
+    expr: router_available_routes_count == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: intelligent-router
+    annotations:
+      summary: "No available routes"
+      description: "No available routes for {{ $labels.provider_type }}:{{ $labels.model_name }}"
+
+  # Provider Health Alerts
+  - alert: ProviderUnhealthy
+    expr: router_provider_health_score < 0.5
+    for: 3m
+    labels:
+      severity: critical
+      service: provider-health
+    annotations:
+      summary: "Provider unhealthy"
+      description: "Provider {{ $labels.provider_type }} health score is {{ $value }}"
+
+  - alert: ProviderDegraded
+    expr: router_provider_health_score < 0.8
+    for: 5m
+    labels:
+      severity: warning
+      service: provider-health
+    annotations:
+      summary: "Provider degraded"
+      description: "Provider {{ $labels.provider_type }} health score is {{ $value }}"
+
+  - alert: ProviderResponseTimeDegraded
+    expr: histogram_quantile(0.95, rate(router_provider_response_time_seconds_bucket[5m])) > 10.0
+    for: 5m
+    labels:
+      severity: warning
+      service: provider-performance
+    annotations:
+      summary: "Provider response time degraded"
+      description: "Provider {{ $labels.provider_type }} 95th percentile response time is {{ $value }}s"
+
+  - alert: ProviderErrorRateHigh
+    expr: rate(router_provider_requests_total{status="error"}[5m]) / rate(router_provider_requests_total[5m]) > 0.1
+    for: 3m
+    labels:
+      severity: warning
+      service: provider-performance
+    annotations:
+      summary: "Provider error rate high"
+      description: "Provider {{ $labels.provider_type }} error rate is {{ $value | humanizePercentage }}"
+
+  # Capacity Management Alerts
+  - alert: ProviderNearCapacity
+    expr: router_provider_capacity_utilization > 0.9
+    for: 5m
+    labels:
+      severity: warning
+      service: capacity
+    annotations:
+      summary: "Provider near capacity"
+      description: "Provider {{ $labels.provider_type }} is {{ $value | humanizePercentage }} utilized"
+
+  - alert: ProviderOverCapacity
+    expr: router_provider_capacity_utilization > 1.0
+    for: 1m
+    labels:
+      severity: critical
+      service: capacity
+    annotations:
+      summary: "Provider over capacity"
+      description: "Provider {{ $labels.provider_type }} is {{ $value | humanizePercentage }} utilized"
+
+  - alert: InsufficientProviderCapacity
+    expr: sum(router_provider_available_capacity) by (model_name) < 10
+    for: 5m
+    labels:
+      severity: warning
+      service: capacity
+    annotations:
+      summary: "Insufficient provider capacity"
+      description: "Available capacity for {{ $labels.model_name }} is {{ $value }} requests/minute"
+
+  # Model-Specific Alerts
+  - alert: ModelUnavailable
+    expr: router_model_available_instances == 0
+    for: 2m
+    labels:
+      severity: critical
+      service: model-availability
+    annotations:
+      summary: "Model unavailable"
+      description: "No available instances for model {{ $labels.model_name }} from {{ $labels.provider_type }}"
+
+  - alert: ModelPerformanceDegraded
+    expr: histogram_quantile(0.95, rate(router_model_response_time_seconds_bucket[5m])) > 15.0
+    for: 5m
+    labels:
+      severity: warning
+      service: model-performance
+    annotations:
+      summary: "Model performance degraded"
+      description: "Model {{ $labels.model_name }} from {{ $labels.provider_type }} 95th percentile response time is {{ $value }}s"
+
+  - alert: ModelHighErrorRate
+    expr: rate(router_model_requests_total{status="error"}[5m]) / rate(router_model_requests_total[5m]) > 0.15
+    for: 3m
+    labels:
+      severity: warning
+      service: model-performance
+    annotations:
+      summary: "Model high error rate"
+      description: "Model {{ $labels.model_name }} from {{ $labels.provider_type }} error rate is {{ $value | humanizePercentage }}"
+
+  # Routing Strategy Alerts
+  - alert: RoutingStrategySuboptimal
+    expr: router_strategy_success_rate < 0.95
+    for: 10m
+    labels:
+      severity: warning
+      service: routing-strategy
+    annotations:
+      summary: "Routing strategy suboptimal"
+      description: "Routing strategy {{ $labels.strategy }} success rate is {{ $value | humanizePercentage }}"
+
+  - alert: RoutingStrategyLatencyHigh
+    expr: histogram_quantile(0.95, rate(router_strategy_latency_seconds_bucket[5m])) > 0.5
+    for: 5m
+    labels:
+      severity: warning
+      service: routing-strategy
+    annotations:
+      summary: "Routing strategy latency high"
+      description: "Routing strategy {{ $labels.strategy }} 95th percentile latency is {{ $value }}s"
+
+  # Queue Management Alerts
+  - alert: RequestQueueBacklog
+    expr: router_request_queue_size > 100
+    for: 3m
+    labels:
+      severity: warning
+      service: queue-management
+    annotations:
+      summary: "Request queue backlog"
+      description: "Request queue size is {{ $value }} for {{ $labels.provider_type }}"
+
+  - alert: RequestQueueCritical
+    expr: router_request_queue_size > 500
+    for: 1m
+    labels:
+      severity: critical
+      service: queue-management
+    annotations:
+      summary: "Critical request queue backlog"
+      description: "Request queue size is {{ $value }} for {{ $labels.provider_type }}"
+
+  - alert: HighQueueWaitTime
+    expr: histogram_quantile(0.95, rate(router_queue_wait_time_seconds_bucket[5m])) > 30.0
+    for: 5m
+    labels:
+      severity: warning
+      service: queue-management
+    annotations:
+      summary: "High queue wait time"
+      description: "95th percentile queue wait time is {{ $value }}s for {{ $labels.provider_type }}"
+
+  # Health Check Alerts
+  - alert: ProviderHealthCheckFailure
+    expr: increase(router_provider_health_checks_total{status="failed"}[5m]) > 3
+    for: 2m
+    labels:
+      severity: warning
+      service: health-checks
+    annotations:
+      summary: "Provider health check failures"
+      description: "{{ $value }} failed health checks for {{ $labels.provider_type }} in the last 5 minutes"
+
+  - alert: HealthCheckIntervalTooLong
+    expr: router_health_check_interval_seconds > 60
+    for: 10m
+    labels:
+      severity: warning
+      service: health-checks
+    annotations:
+      summary: "Health check interval too long"
+      description: "Health check interval is {{ $value }}s for {{ $labels.provider_type }}"
+
+  # Load Balancing Metrics
+  - alert: LowRequestDistribution
+    expr: stddev(rate(instance_manager_load_balancer_selections_total[5m])) / avg(rate(instance_manager_load_balancer_selections_total[5m])) > 0.5
+    for: 10m
+    labels:
+      severity: info
+      service: load-distribution
+    annotations:
+      summary: "Low request distribution"
+      description: "Request distribution coefficient of variation is {{ $value }} for {{ $labels.provider_type }}"
+
+  - alert: StickySessionIssues
+    expr: router_sticky_session_mismatch_rate > 0.1
+    for: 5m
+    labels:
+      severity: warning
+      service: session-management
+    annotations:
+      summary: "Sticky session issues"
+      description: "Sticky session mismatch rate is {{ $value | humanizePercentage }} for {{ $labels.provider_type }}"
+
+  # Geographic Distribution Alerts
+  - alert: GeographicLatencyIssue
+    expr: histogram_quantile(0.95, rate(router_geographic_response_time_seconds_bucket[5m])) > 20.0
+    for: 5m
+    labels:
+      severity: warning
+      service: geographic-routing
+    annotations:
+      summary: "Geographic latency issue"
+      description: "High latency ({{ $value }}s) for {{ $labels.region }} region"
+
+  - alert: RegionCapacityIssue
+    expr: router_region_capacity_utilization > 0.95
+    for: 3m
+    labels:
+      severity: warning
+      service: geographic-routing
+    annotations:
+      summary: "Region capacity issue"
+      description: "Region {{ $labels.region }} is {{ $value | humanizePercentage }} utilized"
+
+  # Intelligent Routing Alerts
+  - alert: MLModelPredictionFailure
+    expr: rate(router_ml_predictions_total{status="failed"}[5m]) / rate(router_ml_predictions_total[5m]) > 0.1
+    for: 3m
+    labels:
+      severity: warning
+      service: ml-routing
+    annotations:
+      summary: "ML model prediction failure"
+      description: "ML routing model failure rate is {{ $value | humanizePercentage }}"
+
+  - alert: RoutingModelAccuracyLow
+    expr: router_routing_model_accuracy < 0.8
+    for: 10m
+    labels:
+      severity: warning
+      service: ml-routing
+    annotations:
+      summary: "Routing model accuracy low"
+      description: "Routing model accuracy is {{ $value | humanizePercentage }}"
+
+  - alert: AITrafficDistributionSkewed
+    expr: router_ai_provider_traffic_share > 0.8
+    for: 15m
+    labels:
+      severity: info
+      service: traffic-distribution
+    annotations:
+      summary: "AI traffic distribution skewed"
+      description: "AI provider {{ $labels.provider_type }} handles {{ $value | humanizePercentage }} of traffic"

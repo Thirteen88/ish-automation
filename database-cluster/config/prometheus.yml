@@ -1,0 +1,94 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # PostgreSQL Exporter
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    params:
+      collect[]: [database, bgwriter, stat_progress_vacuum]
+
+  # PgBouncer Exporter
+  - job_name: 'pgbouncer'
+    static_configs:
+      - targets: ['pgbouncer-exporter:9127']
+    scrape_interval: 10s
+    metrics_path: /metrics
+
+  # HAProxy
+  - job_name: 'haproxy'
+    static_configs:
+      - targets: ['haproxy:8404']
+    scrape_interval: 10s
+    metrics_path: /stats;csv
+
+  # Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 10s
+
+  # Node Exporter (if added)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 10s
+
+  # PostgreSQL Primary (Patroni API)
+  - job_name: 'patroni-primary'
+    static_configs:
+      - targets: ['postgres-primary:8008']
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # PostgreSQL Replica 1 (Patroni API)
+  - job_name: 'patroni-replica1'
+    static_configs:
+      - targets: ['postgres-replica1:8008']
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # PostgreSQL Replica 2 (Patroni API)
+  - job_name: 'patroni-replica2'
+    static_configs:
+      - targets: ['postgres-replica2:8008']
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # etcd
+  - job_name: 'etcd'
+    static_configs:
+      - targets: ['etcd:2379']
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # HAProxy Exporter (if available)
+  - job_name: 'haproxy-exporter'
+    static_configs:
+      - targets: ['haproxy-exporter:9101']
+    scrape_interval: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+# rule_files:
+#   - "postgres_rules.yml"
+#   - "haproxy_rules.yml"
+#   - "redis_rules.yml"

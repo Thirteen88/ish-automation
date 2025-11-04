@@ -1,0 +1,325 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "ISH Chat System Overview",
+    "tags": ["ish-chat", "system", "overview"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=~\"ish-chat-.*\"}",
+            "legendFormat": "{{job}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "options": {
+                  "0": {
+                    "text": "DOWN",
+                    "color": "red"
+                  },
+                  "1": {
+                    "text": "UP",
+                    "color": "green"
+                  }
+                },
+                "type": "value"
+              }
+            ],
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Total Requests per Minute",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_requests_total[1m]))",
+            "legendFormat": "Requests/min"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps",
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 50
+                },
+                {
+                  "color": "red",
+                  "value": 100
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Error Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_requests_total{status=\"error\"}[1m])) / sum(rate(instance_manager_requests_total[1m])) * 100",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 5
+                },
+                {
+                  "color": "red",
+                  "value": 10
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_requests_total[1m])) by (provider_type)",
+            "legendFormat": "{{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Requests per second"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Response Time Distribution",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(instance_manager_request_duration_seconds_bucket[1m])) by (le, provider_type))",
+            "legendFormat": "50th percentile - {{provider_type}}"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(instance_manager_request_duration_seconds_bucket[1m])) by (le, provider_type))",
+            "legendFormat": "95th percentile - {{provider_type}}"
+          },
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(instance_manager_request_duration_seconds_bucket[1m])) by (le, provider_type))",
+            "legendFormat": "99th percentile - {{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time (seconds)"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 6,
+        "title": "Instance Health Overview",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(instance_manager_instances_total) by (status, provider_type)",
+            "legendFormat": "{{provider_type}} - {{status}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 7,
+        "title": "Load Balancer Selections",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_load_balancer_selections_total[1m])) by (strategy)",
+            "legendFormat": "{{strategy}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Selections per second"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 16
+        }
+      },
+      {
+        "id": 8,
+        "title": "Active Instances by Provider",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(instance_manager_instances_healthy) by (provider_type)",
+            "legendFormat": "{{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Number of Instances"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 16
+        }
+      },
+      {
+        "id": 9,
+        "title": "System Resource Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU Usage - {{instance}}"
+          },
+          {
+            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+            "legendFormat": "Memory Usage - {{instance}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Usage (%)",
+            "max": 100,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 10,
+        "title": "Cost Analysis",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_cost_estimate_dollars[1m])) by (provider_type)",
+            "legendFormat": "Cost Rate - {{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Cost ($/minute)"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        }
+      },
+      {
+        "id": 11,
+        "title": "Recent Failures",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "instance_manager_load_balancer_failovers_total",
+            "legendFormat": "{{provider_type}} - {{model_name}} - {{reason}}",
+            "format": "table"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 32
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}

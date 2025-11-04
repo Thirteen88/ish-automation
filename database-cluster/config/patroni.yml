@@ -1,0 +1,204 @@
+scope: ish-chat-cluster
+namespace: /service/
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: ${PATRONI_RESTAPI_CONNECT_ADDRESS}
+  authentication:
+    username: patroni
+    password: ${PATRONI_RESTAPI_PASSWORD:-patroni_admin}
+
+etcd:
+  hosts: etcd:2379
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+      use_slots: true
+      parameters:
+        max_connections: 200
+        max_locks_per_transaction: 64
+        max_prepared_transactions: 0
+        max_wal_senders: 10
+        max_replication_slots: 10
+        wal_level: replica
+        hot_standby: "on"
+        wal_keep_segments: 8
+        archive_mode: "on"
+        archive_command: "wal-g wal-push %p"
+        archive_timeout: 1800
+        wal_log_hints: "on"
+        track_commit_timestamp: "on"
+
+    pg_hba:
+      - host replication replicator 0.0.0.0/0 md5
+      - host all all 0.0.0.0/0 md5
+
+  initdb:
+  - encoding: UTF8
+  - data-checksums
+
+  pg_hba:
+  - host replication replicator 0.0.0.0/0 md5
+  - host all all 0.0.0.0/0 md5
+  - host all all ::1/128 md5
+
+  users:
+    replicator:
+      password: ${PATRONI_REPLICATION_PASSWORD}
+      options:
+        - createrole
+        - createdb
+
+postgresql:
+  listen: 0.0.0.0:5432
+  connect_address: ${PATRONI_POSTGRESQL_CONNECT_ADDRESS}
+  data_dir: ${PATRONI_POSTGRESQL_DATA_DIR}
+  pgpass: /tmp/.pgpass
+
+  authentication:
+    superuser:
+      username: postgres
+      password: ${POSTGRES_PASSWORD}
+    replication:
+      username: replicator
+      password: ${PATRONI_REPLICATION_PASSWORD}
+
+  callbacks:
+    on_start: /bin/true
+    on_stop: /bin/true
+    on_restart: /bin/true
+    on_reload: /bin/true
+    on_role_change: /bin/true
+
+  parameters:
+    # Connection settings
+    listen_addresses: '*'
+    port: 5432
+    max_connections: 200
+    superuser_reserved_connections: 3
+
+    # Memory settings
+    shared_buffers: 256MB
+    effective_cache_size: 1GB
+    work_mem: 4MB
+    maintenance_work_mem: 64MB
+
+    # WAL settings
+    wal_level: replica
+    max_wal_senders: 10
+    max_replication_slots: 10
+    wal_keep_size: 1GB
+    archive_mode: on
+    archive_command: 'wal-g wal-push %p'
+    archive_timeout: 1800
+
+    # Checkpoint settings
+    checkpoint_completion_target: 0.9
+    checkpoint_timeout: 15min
+    wal_buffers: 16MB
+
+    # Performance settings
+    random_page_cost: 1.1
+    effective_io_concurrency: 200
+    seq_page_cost: 1.0
+
+    # Logging
+    logging_collector: on
+    log_destination: stderr
+    log_directory: log
+    log_filename: postgresql-%Y-%m-%d_%H%M%S.log
+    log_min_messages: warning
+    log_min_error_statement: error
+    log_connections: on
+    log_disconnections: on
+    log_duration: on
+    log_statement: 'mod'
+    log_checkpoints: on
+    log_lock_waits: on
+
+    # Autovacuum
+    autovacuum: on
+    autovacuum_max_workers: 3
+    autovacuum_naptime: 1min
+    autovacuum_vacuum_threshold: 50
+    autovacuum_analyze_threshold: 50
+    autovacuum_vacuum_scale_factor: 0.2
+    autovacuum_analyze_scale_factor: 0.1
+
+    # Statistics
+    track_activities: on
+    track_counts: on
+    track_io_timing: on
+    track_functions: pl
+
+    # Lock settings
+    deadlock_timeout: 1s
+    lock_timeout: 30s
+    statement_timeout: 300s
+
+    # Locale settings
+    default_text_search_config: 'pg_catalog.english'
+    timezone: 'UTC'
+
+    # JIT settings
+    jit: on
+    jit_inline_above_cost: 500000
+    jit_optimize_above_cost: 500000
+
+    # Parallelism
+    max_parallel_workers_per_gather: 2
+    max_parallel_workers: 8
+    max_parallel_maintenance_workers: 4
+
+    # Extensions
+    shared_preload_libraries: 'pg_stat_statements,auto_explain'
+
+    # pg_stat_statements
+    pg_stat_statements.max: 10000
+    pg_stat_statements.track: all
+    pg_stat_statements.track_utility: on
+    pg_stat_statements.save: on
+
+    # Auto explain
+    auto_explain.log_min_duration: 1000
+    auto_explain.log_analyze: on
+    auto_explain.log_verbose: on
+    auto_explain.log_format: json
+    auto_explain.log_nested_statements: on
+
+tags:
+  nofailover: false
+  noloadbalance: false
+  clonefrom: false
+  nosync: false
+
+watchdog:
+  mode: automatic
+  device: /dev/watchdog
+  safety_margin: 5
+
+failover:
+  priority: 1
+  max_failover_attempts: 3
+  failover_timeout: 60
+
+replication:
+  synchronous: true
+  synchronous_mode_strict: false
+  synchronous_node_count: 1
+  use_pg_rewind: true
+  slots:
+    primary_slot_name:
+      type: physical
+      database: postgres
+      plugin: null
+
+# ISH Chat specific settings
+bootstrap:
+  post_init: /docker-entrypoint-initdb.d/init.sql

@@ -1,0 +1,60 @@
+# Staging environment overrides
+version: '3.8'
+
+services:
+  # Override for staging - reduced resources
+  ish-chat-app-1:
+    environment:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=DEBUG
+      - RATE_LIMIT_PER_MINUTE=300
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  ish-chat-app-2:
+    environment:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=DEBUG
+      - RATE_LIMIT_PER_MINUTE=300
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Single PostgreSQL instance for staging
+  postgres-primary:
+    environment:
+      - POSTGRES_DB=ish_chat_staging
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Remove replicas for staging
+  postgres-replica1:
+    profiles: []
+  postgres-replica2:
+    profiles: []
+
+  # Reduced Redis resources
+  redis:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # Staging monitoring (optional)
+  prometheus:
+    profiles: []
+  grafana:
+    profiles: []
+  redis-exporter:
+    profiles: []
+  postgres-exporter:
+    profiles: []

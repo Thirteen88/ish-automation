@@ -44,6 +44,16 @@ class Settings(BaseSettings):
     # Database Configuration
     database_url: str = Field(default="sqlite:///./ish_chat.db", env="DATABASE_URL")
 
+    # PostgreSQL Configuration (overrides SQLite if provided)
+    postgres_host: str = Field(default="localhost", env="POSTGRES_HOST")
+    postgres_port: int = Field(default=5432, env="POSTGRES_PORT")
+    postgres_database: str = Field(default="ish_chat", env="POSTGRES_DATABASE")
+    postgres_user: str = Field(default="postgres", env="POSTGRES_USER")
+    postgres_password: str = Field(default="", env="POSTGRES_PASSWORD")
+
+    # Use PostgreSQL if configured
+    use_postgresql: bool = Field(default=False, env="USE_POSTGRESQL")
+
     # ZAI Configuration
     zai_api_key: Optional[str] = Field(default=None, env="ZAI_API_KEY")
     zai_api_url: str = Field(default="https://open.bigmodel.cn/api/paas/v4", env="ZAI_API_URL")
@@ -122,13 +132,32 @@ def get_settings() -> Settings:
 # Global settings instance
 settings = get_settings()
 
-# Database configuration
-DATABASE_CONFIG = {
-    "url": settings.database_url,
-    "echo": settings.debug,
-    "pool_pre_ping": True,
-    "pool_recycle": 300,
-}
+# Import PostgreSQL configuration
+from .postgresql_settings import (
+    DATABASE_CONFIG as POSTGRES_CONFIG,
+    READ_REPLICA_CONFIG,
+    PGBOUNCER_CONFIG,
+    PRIMARY_CONNECTION_STRING,
+    READ_CONNECTION_STRING,
+    PGBOUNCER_CONNECTION_STRING,
+    postgresql_settings
+)
+
+# Database configuration - choose between SQLite and PostgreSQL
+if settings.use_postgresql and settings.postgres_password:
+    # Use PostgreSQL configuration
+    DATABASE_CONFIG = POSTGRES_CONFIG
+    # Override connection URL if explicitly provided
+    if settings.database_url and not settings.database_url.startswith('sqlite'):
+        DATABASE_CONFIG["url"] = settings.database_url
+else:
+    # Use SQLite configuration (original)
+    DATABASE_CONFIG = {
+        "url": settings.database_url,
+        "echo": settings.debug,
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
 # Logging configuration
 LOGGING_CONFIG = {

@@ -1,28 +1,143 @@
 """
 Database connection and session management
+Supports both SQLite and PostgreSQL with read/write splitting
 """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 import logging
-from typing import Generator
+import random
+from typing import Generator, Optional
 
 from database.database import Base
-from config.settings import DATABASE_CONFIG
+from config.settings import DATABASE_CONFIG, settings, postgresql_settings
+from config.postgresql_settings import (
+    READ_REPLICA_CONFIG,
+    PGBOUNCER_CONFIG,
+    READ_CONNECTION_STRING,
+    PGBOUNCER_CONNECTION_STRING
+)
 
 logger = logging.getLogger(__name__)
 
-# Database engine
-engine = create_engine(
-    DATABASE_CONFIG["url"],
-    echo=DATABASE_CONFIG["echo"],
-    pool_pre_ping=DATABASE_CONFIG["pool_pre_ping"],
-    pool_recycle=DATABASE_CONFIG["pool_recycle"],
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_CONFIG["url"] else {}
-)
+# Determine if using PostgreSQL
+USE_POSTGRESQL = settings.use_postgresql and settings.postgres_password
+USE_PGBOUNCER = USE_POSTGRESQL and postgresql_settings.pgbouncer_password
 
-# Session factory
+# Primary database engine (for writes)
+if USE_PGBOUNCER:
+    # Use PgBouncer for connection pooling
+    engine = create_engine(
+        PGBOUNCER_CONNECTION_STRING,
+        echo=DATABASE_CONFIG["echo"],
+        pool_pre_ping=DATABASE_CONFIG["pool_pre_ping"],
+        pool_recycle=DATABASE_CONFIG["pool_recycle"],
+        pool_size=PGBOUNCER_CONFIG["pool_size"],
+        max_overflow=PGBOUNCER_CONFIG["max_overflow"],
+        pool_timeout=PGBOUNCER_CONFIG["pool_timeout"],
+        connect_args=PGBOUNCER_CONFIG["connect_args"]
+    )
+    logger.info("Using PgBouncer for PostgreSQL connection pooling")
+elif USE_POSTGRESQL:
+    # Direct PostgreSQL connection
+    engine = create_engine(
+        DATABASE_CONFIG["url"],
+        echo=DATABASE_CONFIG["echo"],
+        pool_pre_ping=DATABASE_CONFIG["pool_pre_ping"],
+        pool_recycle=DATABASE_CONFIG["pool_recycle"],
+        pool_size=DATABASE_CONFIG["pool_size"],
+        max_overflow=DATABASE_CONFIG.get("max_overflow", 10),
+        pool_timeout=DATABASE_CONFIG.get("pool_timeout", 30),
+        connect_args=DATABASE_CONFIG.get("connect_args", {})
+    )
+    logger.info("Using direct PostgreSQL connection")
+else:
+    # SQLite connection (original)
+    engine = create_engine(
+        DATABASE_CONFIG["url"],
+        echo=DATABASE_CONFIG["echo"],
+        pool_pre_ping=DATABASE_CONFIG["pool_pre_ping"],
+        pool_recycle=DATABASE_CONFIG["pool_recycle"],
+        connect_args={"check_same_thread": False}
+    )
+    logger.info("Using SQLite database")
+
+# Primary session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Read replica engines (for PostgreSQL)
+read_engines = []
+if USE_POSTGRESQL:
+    # Create read replica engines
+    replica_urls = postgresql_settings.get_replica_urls()
+    for replica_url in replica_urls:
+        try:
+            replica_engine = create_engine(
+                replica_url,
+                echo=DATABASE_CONFIG["echo"],
+                pool_pre_ping=DATABASE_CONFIG["pool_pre_ping"],
+                pool_recycle=DATABASE_CONFIG["pool_recycle"],
+                pool_size=READ_REPLICA_CONFIG["pool_size"],
+                max_overflow=READ_REPLICA_CONFIG["max_overflow"],
+                pool_timeout=READ_REPLICA_CONFIG["pool_timeout"],
+                connect_args=READ_REPLICA_CONFIG["connect_args"]
+            )
+            read_engines.append(replica_engine)
+            logger.info(f"Added read replica: {replica_url}")
+        except Exception as e:
+            logger.warning(f"Failed to create read replica engine {replica_url}: {e}")
+
+    # If no replicas available, use HAProxy read endpoint
+    if not read_engines and READ_CONNECTION_STRING:
+        try:
+            haproxy_read_engine = create_engine(
+                READ_CONNECTION_STRING,
+                echo=DATABASE_CONFIG["echo"],
+                pool_pre_ping=DATABASE_CONFIG["pool_pre_ping"],
+                pool_recycle=DATABASE_CONFIG["pool_recycle"],
+                pool_size=READ_REPLICA_CONFIG["pool_size"],
+                max_overflow=READ_REPLICA_CONFIG["max_overflow"],
+                pool_timeout=READ_REPLICA_CONFIG["pool_timeout"],
+                connect_args=READ_REPLICA_CONFIG["connect_args"]
+            )
+            read_engines.append(haproxy_read_engine)
+            logger.info("Using HAProxy read endpoint for replicas")
+        except Exception as e:
+            logger.warning(f"Failed to create HAProxy read engine: {e}")
+
+# Read session factories
+ReadSessionLocals = []
+for read_engine in read_engines:
+    ReadSessionLocals.append(
+        sessionmaker(autocommit=False, autoflush=False, bind=read_engine)
+    )
+
+def set_instance_context(instance_id: str):
+    """Set instance context for row-level security"""
+    if USE_POSTGRESQL:
+        with engine.connect() as conn:
+            conn.execute(f"SET app.current_instance_id = '{instance_id}'")
+            conn.commit()
+
+def get_instance_id() -> str:
+    """Get current instance ID"""
+    return postgresql_settings.instance_id
+
+def get_random_read_engine():
+    """Get a random read replica engine for load balancing"""
+    if read_engines:
+        return random.choice(read_engines)
+    return engine
+
+def get_read_session():
+    """Get a read-only session (uses replicas if available)"""
+    if ReadSessionLocals:
+        # Use random replica for load balancing
+        session_local = random.choice(ReadSessionLocals)
+        return session_local()
+    else:
+        # Fallback to primary engine
+        return SessionLocal()
 
 def create_tables():
     """Create all database tables"""

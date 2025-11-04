@@ -1,0 +1,293 @@
+# ISH Chat Instance Manager Alert Rules
+groups:
+- name: instance_manager_health
+  rules:
+  # Instance Health Alerts
+  - alert: InstanceManagerDown
+    expr: up{job="ish-chat-instance-manager"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: instance-manager
+    annotations:
+      summary: "Instance Manager is down"
+      description: "Instance Manager on {{ $labels.instance }} is down"
+
+  - alert: NoHealthyInstances
+    expr: instance_manager_instances_healthy == 0
+    for: 2m
+    labels:
+      severity: critical
+      service: instance-manager
+    annotations:
+      summary: "No healthy instances available"
+      description: "Provider {{ $labels.provider_type }} has no healthy instances"
+
+  - alert: TooManyUnhealthyInstances
+    expr: (instance_manager_instances_total{status="unhealthy"} / instance_manager_instances_total{status="total"}) * 100 > 50
+    for: 3m
+    labels:
+      severity: warning
+      service: instance-manager
+    annotations:
+      summary: "Too many unhealthy instances"
+      description: "{{ $value }}% of instances are unhealthy for provider {{ $labels.provider_type }}"
+
+  # Performance Alerts
+  - alert: HighErrorRate
+    expr: rate(instance_manager_requests_total{status="error"}[5m]) / rate(instance_manager_requests_total[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: warning
+      service: instance-manager
+    annotations:
+      summary: "High error rate detected"
+      description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.provider_type }}:{{ $labels.model_name }}"
+
+  - alert: HighResponseTime
+    expr: histogram_quantile(0.95, rate(instance_manager_request_duration_seconds_bucket[5m])) > 5.0
+    for: 5m
+    labels:
+      severity: warning
+      service: instance-manager
+    annotations:
+      summary: "High response time detected"
+      description: "95th percentile response time is {{ $value }}s for {{ $labels.provider_type }}:{{ $labels.model_name }}"
+
+  - alert: VeryHighResponseTime
+    expr: histogram_quantile(0.95, rate(instance_manager_request_duration_seconds_bucket[5m])) > 10.0
+    for: 2m
+    labels:
+      severity: critical
+      service: instance-manager
+    annotations:
+      summary: "Very high response time detected"
+      description: "95th percentile response time is {{ $value }}s for {{ $labels.provider_type }}:{{ $labels.model_name }}"
+
+  - alert: InstanceHighLoad
+    expr: instance_manager_instance_load > 80
+    for: 5m
+    labels:
+      severity: warning
+      service: instance-manager
+    annotations:
+      summary: "Instance under high load"
+      description: "Instance {{ $labels.instance_id }} has {{ $value }}% load"
+
+  - alert: InstanceLowSuccessRate
+    expr: instance_manager_instance_success_rate < 0.95
+    for: 5m
+    labels:
+      severity: warning
+      service: instance-manager
+    annotations:
+      summary: "Instance low success rate"
+      description: "Instance {{ $labels.instance_id }} has {{ $value | humanizePercentage }} success rate"
+
+  # Auto-scaling Alerts
+  - alert: FrequentScalingEvents
+    expr: increase(instance_manager_scaling_events_total[1h]) > 10
+    for: 0m
+    labels:
+      severity: warning
+      service: auto-scaling
+    annotations:
+      summary: "Frequent scaling events detected"
+      description: "{{ $value }} scaling events in the last hour for {{ $labels.provider_type }}"
+
+  - alert: ScalingEventFailed
+    expr: instance_manager_scaling_events_total{direction="failed"} > 0
+    for: 0m
+    labels:
+      severity: critical
+      service: auto-scaling
+    annotations:
+      summary: "Scaling event failed"
+      description: "Failed scaling event for {{ $labels.provider_type }}: {{ $labels.reason }}"
+
+  - alert: ScalingGap
+    expr: abs(instance_manager_instances_current - instance_manager_instances_desired) > 2
+    for: 5m
+    labels:
+      severity: warning
+      service: auto-scaling
+    annotations:
+      summary: "Scaling gap detected"
+      description: "Current instances ({{ $value.current }}) differs from desired ({{ $value.desired }}) for {{ $labels.provider_type }}"
+
+  # Health Check Alerts
+  - alert: HealthCheckFailures
+    expr: rate(instance_manager_health_checks_total{status="unhealthy"}[5m]) > 0.2
+    for: 3m
+    labels:
+      severity: warning
+      service: health-checks
+    annotations:
+      summary: "Health check failures detected"
+      description: "Health check failure rate is {{ $value | humanizePercentage }} for {{ $labels.instance_id }}"
+
+  - alert: SlowHealthChecks
+    expr: histogram_quantile(0.95, rate(instance_manager_health_check_duration_seconds_bucket[5m])) > 10.0
+    for: 5m
+    labels:
+      severity: warning
+      service: health-checks
+    annotations:
+      summary: "Slow health checks detected"
+      description: "95th percentile health check time is {{ $value }}s for {{ $labels.instance_id }}"
+
+  - alert: LowHealthScore
+    expr: instance_manager_health_score < 0.7
+    for: 3m
+    labels:
+      severity: warning
+      service: health-checks
+    annotations:
+      summary: "Low health score detected"
+      description: "Health score is {{ $value }} for {{ $labels.instance_id }}"
+
+  - alert: VeryLowHealthScore
+    expr: instance_manager_health_score < 0.5
+    for: 1m
+    labels:
+      severity: critical
+      service: health-checks
+    annotations:
+      summary: "Very low health score detected"
+      description: "Health score is {{ $value }} for {{ $labels.instance_id }}"
+
+  # Circuit Breaker Alerts
+  - alert: CircuitBreakerOpen
+    expr: instance_manager_circuit_breaker_state == 1
+    for: 2m
+    labels:
+      severity: critical
+      service: circuit-breaker
+    annotations:
+      summary: "Circuit breaker is open"
+      description: "Circuit breaker is open for instance {{ $labels.instance_id }}"
+
+  - alert: CircuitBreakerHalfOpen
+    expr: instance_manager_circuit_breaker_state == 2
+    for: 5m
+    labels:
+      severity: warning
+      service: circuit-breaker
+    annotations:
+      summary: "Circuit breaker is half-open"
+      description: "Circuit breaker is half-open for instance {{ $labels.instance_id }}"
+
+  # Cost Alerts
+  - alert: HighCostSpike
+    expr: increase(instance_manager_cost_estimate_dollars[1h]) > 10.0
+    for: 5m
+    labels:
+      severity: warning
+      service: cost
+    annotations:
+      summary: "High cost spike detected"
+      description: "Cost increased by ${{ $value }} in the last hour for {{ $labels.provider_type }}:{{ $labels.model_name }}"
+
+  - alert: DailyCostBudgetExceeded
+    expr: increase(instance_manager_cost_estimate_dollars[24h]) > 100.0
+    for: 0m
+    labels:
+      severity: critical
+      service: cost
+    annotations:
+      summary: "Daily cost budget exceeded"
+      description: "Daily cost ${{ $value }} exceeded budget for {{ $labels.provider_type }}"
+
+  # Token Usage Alerts
+  - alert: HighTokenUsage
+    expr: rate(instance_manager_tokens_used_total[5m]) > 10000
+    for: 5m
+    labels:
+      severity: warning
+      service: usage
+    annotations:
+      summary: "High token usage detected"
+      description: "Token usage rate is {{ $value | humanize }} tokens/minute for {{ $labels.provider_type }}:{{ $labels.model_name }}"
+
+  - alert: TokenUsageQuotaExceeded
+    expr: increase(instance_manager_tokens_used_total[24h]) > 1000000
+    for: 0m
+    labels:
+      severity: critical
+      service: usage
+    annotations:
+      summary: "Token usage quota exceeded"
+      description: "Daily token usage {{ $value | humanize }} exceeded quota for {{ $labels.provider_type }}"
+
+  # Cache Performance Alerts
+  - alert: LowCacheHitRate
+    expr: rate(instance_manager_cache_hits_total[5m]) / (rate(instance_manager_cache_hits_total[5m]) + rate(instance_manager_cache_misses_total[5m])) < 0.8
+    for: 5m
+    labels:
+      severity: warning
+      service: cache
+    annotations:
+      summary: "Low cache hit rate"
+      description: "Cache hit rate is {{ $value | humanizePercentage }} for {{ $labels.cache_type }}"
+
+  - alert: DatabaseConnectionsHigh
+    expr: instance_manager_database_connections_active > 50
+    for: 5m
+    labels:
+      severity: warning
+      service: database
+    annotations:
+      summary: "High database connections"
+      description: "{{ $value }} active database connections"
+
+  # Instance Lifecycle Alerts
+  - alert: InstanceCreationFailure
+    expr: increase(instance_manager_scaling_events_total{direction="scale_up", reason=~".*error.*"}[10m]) > 0
+    for: 0m
+    labels:
+      severity: critical
+      service: instance-lifecycle
+    annotations:
+      summary: "Instance creation failure"
+      description: "Failed to create new instances for {{ $labels.provider_type }}"
+
+  - alert: InstanceTerminationFailure
+    expr: increase(instance_manager_scaling_events_total{direction="scale_down", reason=~".*error.*"}[10m]) > 0
+    for: 0m
+    labels:
+      severity: warning
+      service: instance-lifecycle
+    annotations:
+      summary: "Instance termination failure"
+      description: "Failed to terminate instances for {{ $labels.provider_type }}"
+
+  - alert: InstanceStuckInTerminating
+    expr: instance_manager_instances_total{status="terminating"} > 0
+    for: 10m
+    labels:
+      severity: warning
+      service: instance-lifecycle
+    annotations:
+      summary: "Instance stuck in terminating state"
+      description: "{{ $value }} instances stuck in terminating state for {{ $labels.provider_type }}"
+
+  # Load Distribution Alerts
+  - alert: UnevenLoadDistribution
+    expr: max(instance_manager_instance_load) - min(instance_manager_instance_load) > 30
+    for: 5m
+    labels:
+      severity: warning
+      service: load-balancer
+    annotations:
+      summary: "Uneven load distribution"
+      description: "Load difference between instances is {{ $value }}% for {{ $labels.provider_type }}"
+
+  - alert: InstanceOverloaded
+    expr: instance_manager_instance_load > 95
+    for: 2m
+    labels:
+      severity: critical
+      service: load-balancer
+    annotations:
+      summary: "Instance critically overloaded"
+      description: "Instance {{ $labels.instance_id }} is {{ $value }}% loaded"

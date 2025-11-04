@@ -1,0 +1,53 @@
+{
+  "tasks": [
+    {
+      "name": "security-audit",
+      "description": "Comprehensive security audit and hardening",
+      "prompt": "Perform a comprehensive security audit of the ISH Chat multi-instance system. Review all configurations, API keys, authentication mechanisms, SSL/TLS setup, and implement security hardening measures. Focus on:\n\n1. Review .env file for security issues\n2. Check API authentication and authorization\n3. Validate SSL/TLS configuration for production\n4. Review Docker security configurations\n5. Implement security headers and best practices\n6. Check for exposed credentials or sensitive data\n7. Validate firewall and network security\n8. Review logging and monitoring for security events\n\nProvide a detailed security assessment report with identified vulnerabilities, risk levels, and specific remediation steps. Implement critical security fixes immediately.",
+      "allowed_tools": ["Read", "Write", "Edit", "Bash", "Grep"],
+      "base_branch": "main"
+    },
+    {
+      "name": "performance-validation",
+      "description": "Production performance testing and optimization",
+      "prompt": "Validate and optimize the performance of the ISH Chat system for production deployment. Conduct comprehensive performance testing:\n\n1. Run load testing on all API endpoints\n2. Test multi-instance functionality under load\n3. Validate database performance and query optimization\n4. Test Redis caching performance\n5. Monitor resource utilization (CPU, memory, disk)\n6. Test concurrent user scenarios\n7. Validate response times meet production requirements\n8. Identify and resolve performance bottlenecks\n9. Optimize configuration for production workloads\n\nGenerate a comprehensive performance report with benchmarks, identified issues, and optimization recommendations. Implement performance improvements where needed.",
+      "allowed_tools": ["Read", "Write", "Edit", "Bash", "Grep"],
+      "base_branch": "main"
+    },
+    {
+      "name": "monitoring-setup",
+      "description": "Production monitoring and alerting configuration",
+      "prompt": "Set up comprehensive production monitoring and alerting for the ISH Chat multi-instance system:\n\n1. Validate Prometheus configuration and targets\n2. Configure Grafana dashboards for all system metrics\n3. Set up AlertManager with production alert rules\n4. Configure health checks for all services\n5. Set up log aggregation with Loki/Promtail\n6. Create business KPI monitoring\n7. Configure alert notifications (email, Slack, etc.)\n8. Test all monitoring and alerting functionality\n9. Create monitoring documentation and runbooks\n\nEnsure complete monitoring coverage with proper alerting thresholds, notification channels, and escalation procedures. Test all monitoring components thoroughly.",
+      "allowed_tools": ["Read", "Write", "Edit", "Bash", "Grep"],
+      "base_branch": "main"
+    },
+    {
+      "name": "backup-recovery",
+      "description": "Backup and recovery procedures implementation and testing",
+      "prompt": "Implement and test comprehensive backup and recovery procedures for the ISH Chat production system:\n\n1. Set up automated database backups (PostgreSQL)\n2. Configure configuration backups\n3. Implement backup verification procedures\n4. Test disaster recovery scenarios\n5. Set up backup retention policies\n6. Configure off-site backup storage\n7. Test complete system restoration\n8. Document recovery procedures\n9. Set up backup monitoring and alerting\n\nCreate and test complete backup and recovery procedures. Verify that all critical data can be backed up and restored successfully. Document all procedures and test them thoroughly.",
+      "allowed_tools": ["Read", "Write", "Edit", "Bash", "Grep"],
+      "base_branch": "main"
+    },
+    {
+      "name": "ssl-tls-setup",
+      "description": "SSL/TLS certificate configuration and HTTPS setup",
+      "prompt": "Configure SSL/TLS certificates and HTTPS for the ISH Chat production system:\n\n1. Obtain and configure SSL/TLS certificates (Let's Encrypt or production certs)\n2. Configure Nginx for HTTPS with proper security settings\n3. Set up HTTP to HTTPS redirects\n4. Configure SSL security headers\n5. Test SSL configuration and security\n6. Set up certificate auto-renewal\n7. Configure SSL monitoring\n8. Test HTTPS functionality end-to-end\n9. Validate SSL security best practices\n\nImplement complete SSL/TLS configuration with proper security settings, monitoring, and maintenance procedures. Ensure all services use HTTPS with strong security configurations.",
+      "allowed_tools": ["Read", "Write", "Edit", "Bash", "Grep"],
+      "base_branch": "main"
+    },
+    {
+      "name": "production-deployment",
+      "description": "Execute production deployment and validation",
+      "prompt": "Execute the final production deployment of the ISH Chat multi-instance system:\n\n1. Update all configurations for production environment\n2. Deploy all services using Docker Compose\n3. Verify all services start correctly and are healthy\n4. Test all API endpoints and functionality\n5. Validate multi-instance functionality\n6. Test load balancing and failover\n7. Verify monitoring and alerting are working\n8. Test complete system functionality end-to-end\n9. Performance validation in production configuration\n10. Generate production deployment report\n\nExecute the complete production deployment, ensuring all services are properly configured, secured, monitored, and fully operational. Provide comprehensive deployment documentation and system access information.",
+      "allowed_tools": ["Read", "Write", "Edit", "Bash", "Grep"],
+      "base_branch": "main"
+    },
+    {
+      "name": "final-validation",
+      "description": "Complete production system validation and documentation",
+      "prompt": "Perform final validation of the ISH Chat production system and generate comprehensive documentation:\n\n1. Complete system health check\n2. End-to-end functionality testing\n3. Security validation\n4. Performance benchmarking\n5. Multi-instance load testing\n6. Failover and recovery testing\n7. Monitoring and alerting validation\n8. API testing and validation\n9. Generate production readiness report\n10. Create system access documentation\n11. Document all configurations and procedures\n12. Create operational runbooks\n\nProvide a complete production readiness assessment with all test results, performance metrics, security status, and comprehensive documentation for system operation and maintenance.",
+      "allowed_tools": ["Read", "Write", "Edit", "Bash", "Grep"],
+      "base_branch": "main"
+    }
+  ]
+}

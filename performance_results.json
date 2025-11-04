@@ -1,0 +1,58 @@
+[
+  {
+    "endpoint": "/health",
+    "method": "GET",
+    "total_requests": 20,
+    "successful_requests": 20,
+    "failed_requests": 0,
+    "success_rate": 100.0,
+    "avg_response_time": 14.880812168121338,
+    "min_response_time": 7.924795150756836,
+    "max_response_time": 21.918058395385742,
+    "median_response_time": 15.078306198120117,
+    "p95_response_time": 21.918058395385742,
+    "requests_per_second": 67.20063318467699
+  },
+  {
+    "endpoint": "/api/relay",
+    "method": "POST",
+    "total_requests": 10,
+    "successful_requests": 10,
+    "failed_requests": 0,
+    "success_rate": 100.0,
+    "avg_response_time": 7.484173774719238,
+    "min_response_time": 4.477977752685547,
+    "max_response_time": 10.614871978759766,
+    "median_response_time": 7.809996604919434,
+    "p95_response_time": 10.614871978759766,
+    "requests_per_second": 133.61528341016026
+  },
+  {
+    "endpoint": "/api/android/status",
+    "method": "GET",
+    "total_requests": 5,
+    "successful_requests": 5,
+    "failed_requests": 0,
+    "success_rate": 100.0,
+    "avg_response_time": 50.48365592956543,
+    "min_response_time": 18.39447021484375,
+    "max_response_time": 82.59940147399902,
+    "median_response_time": 50.51851272583008,
+    "p95_response_time": 82.59940147399902,
+    "requests_per_second": 19.80839108394201
+  },
+  {
+    "endpoint": "/api/android/execute?command=devices",
+    "method": "POST",
+    "total_requests": 3,
+    "successful_requests": 3,
+    "failed_requests": 0,
+    "success_rate": 100.0,
+    "avg_response_time": 13.782580693562826,
+    "min_response_time": 7.559061050415039,
+    "max_response_time": 19.88959312438965,
+    "median_response_time": 13.899087905883789,
+    "p95_response_time": 19.88959312438965,
+    "requests_per_second": 72.5553524578348
+  }
+]

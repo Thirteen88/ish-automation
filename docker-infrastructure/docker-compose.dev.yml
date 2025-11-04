@@ -1,0 +1,80 @@
+# Development environment overrides
+version: '3.8'
+
+services:
+  # Development app instances with hot reload
+  ish-chat-app-1:
+    volumes:
+      - ../src:/app/src
+      - ../logs:/app/logs
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - DEBUG=true
+      - RATE_LIMIT_PER_MINUTE=1000
+    ports:
+      - "8000:8000"  # Direct access for development
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # Single app instance for development
+  ish-chat-app-2:
+    profiles: []
+
+  # Simplified database for development
+  postgres-primary:
+    environment:
+      - POSTGRES_DB=ish_chat_dev
+    ports:
+      - "5432:5432"  # Direct access for development
+
+  # Remove replicas for development
+  postgres-replica1:
+    profiles: []
+  postgres-replica2:
+    profiles: []
+
+  # Development Redis
+  redis:
+    ports:
+      - "6379:6379"  # Direct access for development
+
+  # Development AI providers (all with direct access)
+  zai-provider:
+    ports:
+      - "8001:8001"
+    environment:
+      - LOG_LEVEL=DEBUG
+
+  openai-provider:
+    ports:
+      - "8002:8002"
+    environment:
+      - LOG_LEVEL=DEBUG
+
+  claude-provider:
+    ports:
+      - "8003:8003"
+    environment:
+      - LOG_LEVEL=DEBUG
+
+  perplexity-provider:
+    ports:
+      - "8004:8004"
+    environment:
+      - LOG_LEVEL=DEBUG
+
+  # Remove monitoring for development (optional)
+  nginx-lb:
+    profiles: []
+
+  prometheus:
+    profiles: []
+
+  grafana:
+    profiles: []
+
+  redis-exporter:
+    profiles: []
+
+  postgres-exporter:
+    profiles: []

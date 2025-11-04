@@ -1,0 +1,550 @@
+version: '3.8'
+
+networks:
+  ish-chat-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  postgres_primary_data:
+    driver: local
+  postgres_replica1_data:
+    driver: local
+  postgres_replica2_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  nginx_logs:
+    driver: local
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
+  zai_api_key:
+    file: ./secrets/zai_api_key.txt
+  openai_api_key:
+    file: ./secrets/openai_api_key.txt
+  anthropic_api_key:
+    file: ./secrets/anthropic_api_key.txt
+
+services:
+  # PostgreSQL Primary Database
+  postgres-primary:
+    image: postgres:15-alpine
+    container_name: ish-chat-postgres-primary
+    environment:
+      POSTGRES_DB: ish_chat
+      POSTGRES_USER: ishchat
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: replicator_password
+    volumes:
+      - postgres_primary_data:/var/lib/postgresql/data
+      - ./database/postgres-primary.conf:/etc/postgresql/postgresql.conf
+      - ./database/setup-replication.sh:/docker-entrypoint-initdb.d/setup-replication.sh
+    ports:
+      - "5435:5432"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.10
+    secrets:
+      - postgres_password
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ishchat -d ish_chat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  # PostgreSQL Replica 1
+  postgres-replica1:
+    image: postgres:15-alpine
+    container_name: ish-chat-postgres-replica1
+    environment:
+      POSTGRES_DB: ish_chat
+      POSTGRES_USER: ishchat
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      PGUSER: postgres
+      POSTGRES_MASTER_SERVICE: postgres-primary
+    volumes:
+      - postgres_replica1_data:/var/lib/postgresql/data
+      - ./database/postgres-replica.conf:/etc/postgresql/postgresql.conf
+    ports:
+      - "5433:5432"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.11
+    secrets:
+      - postgres_password
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ishchat -d ish_chat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # PostgreSQL Replica 2
+  postgres-replica2:
+    image: postgres:15-alpine
+    container_name: ish-chat-postgres-replica2
+    environment:
+      POSTGRES_DB: ish_chat
+      POSTGRES_USER: ishchat
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      PGUSER: postgres
+      POSTGRES_MASTER_SERVICE: postgres-primary
+    volumes:
+      - postgres_replica2_data:/var/lib/postgresql/data
+      - ./database/postgres-replica.conf:/etc/postgresql/postgresql.conf
+    ports:
+      - "5434:5432"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.12
+    secrets:
+      - postgres_password
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ishchat -d ish_chat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ish-chat-redis
+    command: redis-server --requirepass ISHChatRedis2024Secure!456 --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.20
+    environment:
+      REDIS_PASSWORD_FILE: /run/secrets/redis_password
+    secrets:
+      - redis_password
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # ZAI AI Provider
+  zai-provider:
+    build:
+      context: ..
+      dockerfile: docker-infrastructure/ai-providers/zai-provider.Dockerfile
+    container_name: ish-chat-zai-provider
+    environment:
+      - ZAI_API_KEY_FILE=/run/secrets/zai_api_key
+      - ZAI_API_URL=https://open.bigmodel.cn/api/paas/v4
+      - ZAI_MODEL=glm-4
+      - AI_TIMEOUT=30
+      - AI_TEMPERATURE=0.7
+      - AI_MAX_TOKENS=1000
+      - REDIS_URL=redis://:redis_password@172.21.0.20:6379
+      - LOG_LEVEL=INFO
+    ports:
+      - "8001:8001"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.31
+    secrets:
+      - zai_api_key
+      - redis_password
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "health_check.py", "--provider", "zai"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # OpenAI Provider
+  openai-provider:
+    build:
+      context: ..
+      dockerfile: docker-infrastructure/ai-providers/openai-provider.Dockerfile
+    container_name: ish-chat-openai-provider
+    environment:
+      - OPENAI_API_KEY_FILE=/run/secrets/openai_api_key
+      - OPENAI_MODEL=gpt-4
+      - OPENAI_API_BASE=https://api.openai.com/v1
+      - AI_TIMEOUT=30
+      - AI_TEMPERATURE=0.7
+      - AI_MAX_TOKENS=1000
+      - REDIS_URL=redis://:redis_password@172.20.0.20:6379
+      - LOG_LEVEL=INFO
+    ports:
+      - "8002:8002"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.32
+    secrets:
+      - openai_api_key
+      - redis_password
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "health_check.py", "--provider", "openai"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # Claude Provider
+  claude-provider:
+    build:
+      context: ..
+      dockerfile: docker-infrastructure/ai-providers/claude-provider.Dockerfile
+    container_name: ish-chat-claude-provider
+    environment:
+      - ANTHROPIC_API_KEY_FILE=/run/secrets/anthropic_api_key
+      - ANTHROPIC_MODEL=claude-3-sonnet-20240229
+      - AI_TIMEOUT=30
+      - AI_TEMPERATURE=0.7
+      - AI_MAX_TOKENS=1000
+      - REDIS_URL=redis://:redis_password@172.20.0.20:6379
+      - LOG_LEVEL=INFO
+    ports:
+      - "8003:8003"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.33
+    secrets:
+      - anthropic_api_key
+      - redis_password
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "health_check.py", "--provider", "claude"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # Perplexity Provider
+  perplexity-provider:
+    build:
+      context: ..
+      dockerfile: docker-infrastructure/ai-providers/perplexity-provider.Dockerfile
+    container_name: ish-chat-perplexity-provider
+    environment:
+      - PERPLEXITY_PACKAGE=ai.perplexity.app.android
+      - PERPLEXITY_SEARCH_DELAY=1.0
+      - PERPLEXITY_LOAD_DELAY=3.0
+      - ANDROID_TIMEOUT=30
+      - DEVICE_CHECK_INTERVAL=30
+      - SCREENSHOT_DIR=/tmp/screenshots
+      - REDIS_URL=redis://:redis_password@172.20.0.20:6379
+      - LOG_LEVEL=INFO
+    volumes:
+      - /tmp/screenshots:/tmp/screenshots
+      - /var/run/adb:/var/run/adb
+    ports:
+      - "8004:8004"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.34
+    secrets:
+      - redis_password
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "health_check.py", "--provider", "perplexity"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Main ISH Chat Application (Multiple instances for load balancing)
+  ish-chat-app-1:
+    build:
+      context: ..
+      dockerfile: docker-infrastructure/main-app.Dockerfile
+    container_name: ish-chat-app-1
+    environment:
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - BACKEND_API_KEY=ish-chat-secure-key-2024
+      - DATABASE_URL=postgresql://ishchat:postgres_password@172.21.0.10:5432/ish_chat
+      - REDIS_URL=redis://:redis_password@172.20.0.20:6379
+      - ZAI_API_URL=http://172.21.0.31:8001
+      - OPENAI_API_URL=http://172.21.0.32:8002
+      - CLAUDE_API_URL=http://172.21.0.33:8003
+      - PERPLEXITY_API_URL=http://172.21.0.34:8004
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - ENABLE_METRICS=true
+      - METRICS_PORT=9090
+      - RATE_LIMIT_PER_MINUTE=60
+      - MAX_FILE_SIZE=10485760
+      - AI_TIMEOUT=30
+      - AI_TEMPERATURE=0.7
+      - AI_MAX_TOKENS=1000
+      - CACHE_TTL=3600
+      - ENABLE_CACHE=true
+    volumes:
+      - ../uploads:/app/uploads
+      - ../logs:/app/logs
+    ports:
+      - "8010:8000"
+      - "9010:9090"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.41
+    secrets:
+      - postgres_password
+      - redis_password
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      zai-provider:
+        condition: service_healthy
+      openai-provider:
+        condition: service_healthy
+      claude-provider:
+        condition: service_healthy
+      perplexity-provider:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "health_check.py", "--app", "main"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  ish-chat-app-2:
+    build:
+      context: ..
+      dockerfile: docker-infrastructure/main-app.Dockerfile
+    container_name: ish-chat-app-2
+    environment:
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - BACKEND_API_KEY=ish-chat-secure-key-2024
+      - DATABASE_URL=postgresql://ishchat:postgres_password@172.20.0.10:5432/ish_chat
+      - REDIS_URL=redis://:redis_password@172.20.0.20:6379
+      - ZAI_API_URL=http://172.20.0.31:8001
+      - OPENAI_API_URL=http://172.20.0.32:8002
+      - CLAUDE_API_URL=http://172.20.0.33:8003
+      - PERPLEXITY_API_URL=http://172.20.0.34:8004
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - ENABLE_METRICS=true
+      - METRICS_PORT=9090
+      - RATE_LIMIT_PER_MINUTE=60
+      - MAX_FILE_SIZE=10485760
+      - AI_TIMEOUT=30
+      - AI_TEMPERATURE=0.7
+      - AI_MAX_TOKENS=1000
+      - CACHE_TTL=3600
+      - ENABLE_CACHE=true
+    volumes:
+      - ../uploads:/app/uploads
+      - ../logs:/app/logs
+    ports:
+      - "8011:8000"
+      - "9011:9090"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.42
+    secrets:
+      - postgres_password
+      - redis_password
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      zai-provider:
+        condition: service_healthy
+      openai-provider:
+        condition: service_healthy
+      claude-provider:
+        condition: service_healthy
+      perplexity-provider:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "health_check.py", "--app", "main"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  # Nginx Load Balancer
+  nginx-lb:
+    build:
+      context: ./load-balancer
+      dockerfile: nginx.Dockerfile
+    container_name: ish-chat-nginx-lb
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - nginx_logs:/var/log/nginx
+      - ./load-balancer/nginx.conf:/etc/nginx/nginx.conf
+      - ./load-balancer/ssl:/etc/nginx/ssl
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.5
+    restart: unless-stopped
+    depends_on:
+      - ish-chat-app-1
+      - ish-chat-app-2
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ish-chat-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - prometheus_data:/prometheus
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml
+    ports:
+      - "9090:9090"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.90
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ish-chat-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3000:3000"
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.91
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+
+  # Redis Exporter for Prometheus
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: ish-chat-redis-exporter
+    environment:
+      - REDIS_ADDR=redis://172.21.0.20:6379
+      - REDIS_PASSWORD=redis_password
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.92
+    restart: unless-stopped
+    depends_on:
+      - redis
+    secrets:
+      - redis_password
+
+  # PostgreSQL Exporter for Prometheus
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: ish-chat-postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://ishchat:postgres_password@172.21.0.10:5432/ish_chat?sslmode=disable
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.21.0.93
+    restart: unless-stopped
+    depends_on:
+      - postgres-primary
+    secrets:
+      - postgres_password

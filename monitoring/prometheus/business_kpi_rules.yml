@@ -1,0 +1,345 @@
+# ISH Chat Business KPI and Performance Trend Alert Rules
+groups:
+- name: business_metrics
+  rules:
+  # User Engagement Metrics
+  - alert: LowUserActivity
+    expr: rate(ish_chat_user_requests_total[5m]) < 1
+    for: 15m
+    labels:
+      severity: warning
+      service: business-kpi
+    annotations:
+      summary: "Low user activity detected"
+      description: "User request rate is {{ $value | humanize }} requests/minute"
+
+  - alert: UserActivityDrop
+    expr: (rate(ish_chat_user_requests_total[5m]) / rate(ish_chat_user_requests_total[1h] offset 5m)) < 0.5
+    for: 10m
+    labels:
+      severity: warning
+      service: business-kpi
+    annotations:
+      summary: "Significant drop in user activity"
+      description: "User activity dropped by {{ $value | humanizePercentage }} compared to hourly average"
+
+  - alert: PeakUserActivity
+    expr: rate(ish_chat_user_requests_total[5m]) > 100
+    for: 5m
+    labels:
+      severity: info
+      service: business-kpi
+    annotations:
+      summary: "Peak user activity detected"
+      description: "User request rate is {{ $value | humanize }} requests/minute"
+
+  # Cost Management KPIs
+  - alert: DailyCostBudgetWarning
+    expr: increase(ish_chat_daily_cost_dollars[24h]) > 80
+    for: 0m
+    labels:
+      severity: warning
+      service: cost-management
+    annotations:
+      summary: "Approaching daily cost budget"
+      description: "Daily cost ${{ $value }} is approaching budget limit"
+
+  - alert: DailyCostBudgetCritical
+    expr: increase(ish_chat_daily_cost_dollars[24h]) > 95
+    for: 0m
+    labels:
+      severity: critical
+      service: cost-management
+    annotations:
+      summary: "Daily cost budget nearly exceeded"
+      description: "Daily cost ${{ $value }} is critical, near budget limit"
+
+  - alert: CostPerRequestHigh
+    expr: increase(ish_chat_daily_cost_dollars[24h]) / increase(ish_chat_user_requests_total[24h]) > 0.1
+    for: 1h
+    labels:
+      severity: warning
+      service: cost-management
+    annotations:
+      summary: "High cost per request"
+      description: "Cost per request is ${{ $value }} over the last 24 hours"
+
+  - alert: UnexpectedCostSpike
+    expr: increase(ish_chat_daily_cost_dollars[1h]) > increase(ish_chat_daily_cost_dollars[24h] offset 23h) * 3
+    for: 5m
+    labels:
+      severity: critical
+      service: cost-management
+    annotations:
+      summary: "Unexpected cost spike detected"
+      description: "Hourly cost ${{ $value }} is 3x higher than 24h average"
+
+  # Performance KPIs
+  - alert: AverageResponseTimeDegraded
+    expr: histogram_quantile(0.50, rate(instance_manager_request_duration_seconds_bucket[1h])) > 3.0
+    for: 15m
+    labels:
+      severity: warning
+      service: performance-kpi
+    annotations:
+      summary: "Average response time degraded"
+      description: "50th percentile response time is {{ $value }}s over the last hour"
+
+  - alert: UserSatisfactionScoreLow
+    expr: ish_chat_user_satisfaction_score < 0.8
+    for: 30m
+    labels:
+      severity: warning
+      service: user-experience
+    annotations:
+      summary: "User satisfaction score low"
+      description: "User satisfaction score is {{ $value | humanizePercentage }}"
+
+  - alert: UserSatisfactionScoreCritical
+    expr: ish_chat_user_satisfaction_score < 0.6
+    for: 10m
+    labels:
+      severity: critical
+      service: user-experience
+    annotations:
+      summary: "Critical user satisfaction score"
+      description: "User satisfaction score is {{ $value | humanizePercentage }}"
+
+  # AI Provider Performance KPIs
+  - alert: ProviderPerformanceRankingChanged
+    expr: ish_chat_provider_performance_rank != ish_chat_provider_performance_rank offset 1h
+    for: 0m
+    labels:
+      severity: info
+      service: provider-performance
+    annotations:
+      summary: "Provider performance ranking changed"
+      description: "Provider {{ $labels.provider_type }} rank changed to {{ $value }}"
+
+  - alert: ModelPopularityShift
+    expr: rate(ish_chat_model_requests_total[1h]) / rate(ish_chat_model_requests_total[24h] offset 23h) > 2.0
+    for: 10m
+    labels:
+      severity: info
+      service: usage-analytics
+    annotations:
+      summary: "Model popularity surge detected"
+      description: "Model {{ $labels.model_name }} requests increased {{ $value | humanize }}x compared to 24h average"
+
+  - alert: TokenEfficiencyLow
+    expr: increase(instance_manager_tokens_used_total[24h]) / increase(ish_chat_user_requests_total[24h]) > 2000
+    for: 1h
+    labels:
+      severity: warning
+      service: cost-optimization
+    annotations:
+      summary: "Low token efficiency"
+      description: "Average tokens per request is {{ $value | humanize }} over the last 24 hours"
+
+  # Business Growth Metrics
+  - alert: NewUserGrowthStagnant
+    expr: increase(ish_chat_new_users_total[7d]) < 10
+    for: 0m
+    labels:
+      severity: warning
+      service: business-growth
+    annotations:
+      summary: "New user growth stagnant"
+      description: "Only {{ $value }} new users in the last 7 days"
+
+  - alert: UserRetentionLow
+    expr: ish_chat_user_retention_rate_7d < 0.7
+    for: 1d
+    labels:
+      severity: warning
+      service: business-growth
+    annotations:
+      summary: "Low user retention rate"
+      description: "7-day user retention rate is {{ $value | humanizePercentage }}"
+
+  - alert: UserChurnRateHigh
+    expr: ish_chat_user_churn_rate_7d > 0.2
+    for: 1d
+    labels:
+      severity: warning
+      service: business-growth
+    annotations:
+      summary: "High user churn rate"
+      description: "7-day user churn rate is {{ $value | humanizePercentage }}"
+
+  # Feature Usage Analytics
+  - alert: FeatureUsageDrop
+    expr: rate(ish_chat_feature_usage_total[1h]) / rate(ish_chat_feature_usage_total[24h] offset 23h) < 0.5
+    for: 2h
+    labels:
+      severity: warning
+      service: feature-analytics
+    annotations:
+      summary: "Feature usage drop detected"
+      description: "Feature {{ $labels.feature_name }} usage dropped by {{ $value | humanizePercentage }}"
+
+  - alert: PopularFeatureOverloaded
+    expr: rate(ish_chat_feature_usage_total{feature_name=~"chat|ai|query"}[5m]) > 50
+    for: 5m
+    labels:
+      severity: info
+      service: feature-analytics
+    annotations:
+      summary: "Popular feature experiencing high load"
+      description: "Feature {{ $labels.feature_name }} usage rate is {{ $value | humanize }} requests/minute"
+
+  # Quality Metrics
+  - alert: ResponseQualityScoreLow
+    expr: ish_chat_response_quality_score < 0.7
+    for: 30m
+    labels:
+      severity: warning
+      service: quality-assurance
+    annotations:
+      summary: "Response quality score low"
+      description: "Response quality score is {{ $value | humanizePercentage }} for {{ $labels.provider_type }}"
+
+  - alert: ContentModerationAlertsHigh
+    expr: rate(ish_chat_content_moderation_alerts_total[5m]) > 5
+    for: 5m
+    labels:
+      severity: warning
+      service: content-moderation
+    annotations:
+      summary: "High content moderation alerts"
+      description: "Content moderation alert rate is {{ $value | humanize }} per minute"
+
+  # Capacity Planning
+  - alert: CapacityProjectionExceeded
+    expr: predict_linear(ish_chat_user_requests_total[6h], 86400) > ish_chat_max_capacity
+    for: 1h
+    labels:
+      severity: warning
+      service: capacity-planning
+    annotations:
+      summary: "Capacity will be exceeded in 24h"
+      description: "Projected usage {{ $value | humanize }} will exceed max capacity"
+
+  - alert: StorageUsageHigh
+    expr: ish_chat_storage_usage_bytes / ish_chat_storage_capacity_bytes > 0.8
+    for: 1h
+    labels:
+      severity: warning
+      service: storage-management
+    annotations:
+      summary: "Storage usage high"
+      description: "Storage usage is {{ $value | humanizePercentage }} of capacity"
+
+  - alert: StorageUsageCritical
+    expr: ish_chat_storage_usage_bytes / ish_chat_storage_capacity_bytes > 0.95
+    for: 15m
+    labels:
+      severity: critical
+      service: storage-management
+    annotations:
+      summary: "Storage usage critical"
+      description: "Storage usage is {{ $value | humanizePercentage }} of capacity"
+
+  # API Usage and Quotas
+  - alert: APIQuotaUsageHigh
+    expr: ish_chat_api_quota_used / ish_chat_api_quota_limit > 0.8
+    for: 1h
+    labels:
+      severity: warning
+      service: api-management
+    annotations:
+      summary: "API quota usage high"
+      description: "API quota usage is {{ $value | humanizePercentage }} for {{ $labels.provider_type }}"
+
+  - alert: APIQuotaExhausted
+    expr: ish_chat_api_quota_used / ish_chat_api_quota_limit >= 1.0
+    for: 0m
+    labels:
+      severity: critical
+      service: api-management
+    annotations:
+      summary: "API quota exhausted"
+      description: "API quota is exhausted for {{ $labels.provider_type }}"
+
+  # Geographical Performance
+  - alert: RegionalPerformanceDegradation
+    expr: histogram_quantile(0.95, rate(ish_chat_regional_response_time_seconds_bucket[5m])) > 10.0
+    for: 5m
+    labels:
+      severity: warning
+      service: geographic-performance
+    annotations:
+      summary: "Regional performance degradation"
+      description: "Region {{ $labels.region }} 95th percentile response time is {{ $value }}s"
+
+  - alert: RegionalUserActivityLow
+    expr: rate(ish_chat_regional_user_requests_total[10m]) < 0.1
+    for: 30m
+    labels:
+      severity: info
+      service: geographic-analytics
+    annotations:
+      summary: "Low regional user activity"
+      description: "Region {{ $labels.region }} has very low user activity"
+
+  # Service Level Objectives (SLOs)
+  - alert: SLOBudgetConsumptionHigh
+    expr: ish_chat_slo_budget_consumed > 0.8
+    for: 1h
+    labels:
+      severity: warning
+      service: slo-monitoring
+    annotations:
+      summary: "SLO budget consumption high"
+      description: "SLO budget consumption is {{ $value | humanizePercentage }} for {{ $labels.slo_name }}"
+
+  - alert: SLOBudgetExhausted
+    expr: ish_chat_slo_budget_consumed >= 1.0
+    for: 0m
+    labels:
+      severity: critical
+      service: slo-monitoring
+    annotations:
+      summary: "SLO budget exhausted"
+      description: "SLO budget is exhausted for {{ $labels.slo_name }}"
+
+  - alert: SLOBreached
+    expr: ish_chat_slo_compliance < 0.95
+    for: 5m
+    labels:
+      severity: critical
+      service: slo-monitoring
+    annotations:
+      summary: "SLO breached"
+      description: "SLO {{ $labels.slo_name }} compliance is {{ $value | humanizePercentage }}"
+
+  # Business Intelligence
+  - alert: RevenuePerUserLow
+    expr: ish_chat_revenue_per_user < 0.5
+    for: 1d
+    labels:
+      severity: warning
+      service: business-intelligence
+    annotations:
+      summary: "Low revenue per user"
+      description: "Revenue per user is ${{ $value }} over the last 24 hours"
+
+  - alert: CustomerAcquisitionCostHigh
+    expr: ish_chat_customer_acquisition_cost > 10.0
+    for: 1d
+    labels:
+      severity: warning
+      service: business-intelligence
+    annotations:
+      summary: "High customer acquisition cost"
+      description: "Customer acquisition cost is ${{ $value }}"
+
+  - alert: LifetimeValueLow
+    expr: ish_chat_customer_lifetime_value < 50.0
+    for: 7d
+    labels:
+      severity: warning
+      service: business-intelligence
+    annotations:
+      summary: "Low customer lifetime value"
+      description: "Customer lifetime value is ${{ $value }}"

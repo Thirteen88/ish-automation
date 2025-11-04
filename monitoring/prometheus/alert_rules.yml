@@ -1,0 +1,272 @@
+# ISH Chat System Alert Rules
+groups:
+- name: system_health
+  rules:
+  # System Resource Alerts
+  - alert: HighCPUUsage
+    expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+    for: 5m
+    labels:
+      severity: warning
+      service: system
+    annotations:
+      summary: "High CPU usage detected"
+      description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+  - alert: HighMemoryUsage
+    expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+    for: 5m
+    labels:
+      severity: warning
+      service: system
+    annotations:
+      summary: "High memory usage detected"
+      description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+  - alert: DiskSpaceRunningLow
+    expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 90
+    for: 5m
+    labels:
+      severity: critical
+      service: system
+    annotations:
+      summary: "Disk space running low"
+      description: "Disk usage is {{ $value }}% on {{ $labels.instance }}:{{ $labels.mountpoint }}"
+
+  - alert: SystemLoadHigh
+    expr: node_load15 > 2.0
+    for: 5m
+    labels:
+      severity: warning
+      service: system
+    annotations:
+      summary: "High system load"
+      description: "System load is {{ $value }} on {{ $labels.instance }}"
+
+  # Network Alerts
+  - alert: NetworkErrors
+    expr: increase(node_network_receive_errs_total[5m]) > 10
+    for: 2m
+    labels:
+      severity: warning
+      service: network
+    annotations:
+      summary: "Network errors detected"
+      description: "Network errors detected on {{ $labels.instance }}:{{ $labels.device }}"
+
+  - alert: HighNetworkTraffic
+    expr: rate(node_network_receive_bytes_total[5m]) * 8 > 100000000
+    for: 5m
+    labels:
+      severity: info
+      service: network
+    annotations:
+      summary: "High network traffic"
+      description: "Network traffic is {{ $value | humanize }}bps on {{ $labels.instance }}:{{ $labels.device }}"
+
+  # Service Health Alerts
+  - alert: PrometheusDown
+    expr: up{job="prometheus"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: monitoring
+    annotations:
+      summary: "Prometheus is down"
+      description: "Prometheus instance {{ $labels.instance }} is down"
+
+  - alert: AlertManagerDown
+    expr: up{job="alertmanager"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: monitoring
+    annotations:
+      summary: "AlertManager is down"
+      description: "AlertManager instance {{ $labels.instance }} is down"
+
+  - alert: GrafanaDown
+    expr: up{job="grafana"} == 0
+    for: 2m
+    labels:
+      severity: warning
+      service: monitoring
+    annotations:
+      summary: "Grafana is down"
+      description: "Grafana instance {{ $labels.instance }} is down"
+
+  - alert: NodeExporterDown
+    expr: up{job="node-exporter"} == 0
+    for: 2m
+    labels:
+      severity: warning
+      service: monitoring
+    annotations:
+      summary: "Node Exporter is down"
+      description: "Node Exporter on {{ $labels.instance }} is down"
+
+  # Database Alerts
+  - alert: PostgreSQLDown
+    expr: up{job="postgres-exporter"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: database
+    annotations:
+      summary: "PostgreSQL is down"
+      description: "PostgreSQL instance {{ $labels.instance }} is down"
+
+  - alert: PostgreSQLTooManyConnections
+    expr: pg_stat_activity_count > 80
+    for: 5m
+    labels:
+      severity: warning
+      service: database
+    annotations:
+      summary: "PostgreSQL has too many connections"
+      description: "PostgreSQL has {{ $value }} active connections"
+
+  - alert: PostgreSQLSlowQueries
+    expr: rate(pg_stat_statements_mean_time_seconds[5m]) > 1.0
+    for: 5m
+    labels:
+      severity: warning
+      service: database
+    annotations:
+      summary: "PostgreSQL slow queries detected"
+      description: "PostgreSQL average query time is {{ $value }}s"
+
+  - alert: RedisDown
+    expr: up{job="redis-exporter"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: cache
+    annotations:
+      summary: "Redis is down"
+      description: "Redis instance {{ $labels.instance }} is down"
+
+  - alert: RedisHighMemoryUsage
+    expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100 > 90
+    for: 5m
+    labels:
+      severity: warning
+      service: cache
+    annotations:
+      summary: "Redis high memory usage"
+      description: "Redis memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+  # Container Alerts
+  - alert: ContainerDown
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: containers
+    annotations:
+      summary: "Container is down"
+      description: "Container {{ $labels.instance }} is down"
+
+  - alert: ContainerHighCPUUsage
+    expr: rate(container_cpu_usage_seconds_total{name!=""}[5m]) * 100 > 80
+    for: 5m
+    labels:
+      severity: warning
+      service: containers
+    annotations:
+      summary: "Container high CPU usage"
+      description: "Container {{ $labels.name }} CPU usage is {{ $value }}%"
+
+  - alert: ContainerHighMemoryUsage
+    expr: (container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""}) * 100 > 85
+    for: 5m
+    labels:
+      severity: warning
+      service: containers
+    annotations:
+      summary: "Container high memory usage"
+      description: "Container {{ $labels.name }} memory usage is {{ $value }}%"
+
+  - alert: ContainerRestarts
+    expr: increase(container_start_time_seconds{name!=""}[1h]) > 3
+    for: 0m
+    labels:
+      severity: warning
+      service: containers
+    annotations:
+      summary: "Container restarting frequently"
+      description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last hour"
+
+  # SSL Certificate Alerts
+  - alert: SSLCertificateExpiringSoon
+    expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+    for: 1m
+    labels:
+      severity: warning
+      service: security
+    annotations:
+      summary: "SSL certificate expiring soon"
+      description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+
+  - alert: SSLCertificateExpired
+    expr: probe_ssl_earliest_cert_expiry - time() < 0
+    for: 0m
+    labels:
+      severity: critical
+      service: security
+    annotations:
+      summary: "SSL certificate expired"
+      description: "SSL certificate for {{ $labels.instance }} has expired"
+
+  # Backup Alerts
+  - alert: BackupFailed
+    expr: backup_last_successful_timestamp_seconds == 0 or time() - backup_last_successful_timestamp_seconds > 86400 * 2
+    for: 1h
+    labels:
+      severity: critical
+      service: backup
+    annotations:
+      summary: "Backup failed or not recent"
+      description: "Last successful backup was {{ $value | humanizeDuration }} ago"
+
+  # Performance Alerts
+  - alert: HighDiskIOWait
+    expr: rate(node_cpu_seconds_total{mode="iowait"}[5m]) * 100 > 20
+    for: 5m
+    labels:
+      severity: warning
+      service: performance
+    annotations:
+      summary: "High disk I/O wait"
+      description: "Disk I/O wait is {{ $value }}% on {{ $labels.instance }}"
+
+  - alert: SwapUsageHigh
+    expr: (1 - (node_memory_SwapFree_bytes / node_memory_SwapTotal_bytes)) * 100 > 50
+    for: 5m
+    labels:
+      severity: warning
+      service: performance
+    annotations:
+      summary: "High swap usage"
+      description: "Swap usage is {{ $value }}% on {{ $labels.instance }}"
+
+  # Security Alerts
+  - alert: TooManyRootLogins
+    expr: increase(node_systemd_unit_state_results_total{unit="sshd.service",result="success"}[1h]) > 100
+    for: 0m
+    labels:
+      severity: warning
+      service: security
+    annotations:
+      summary: "Too many SSH logins"
+      description: "{{ $value }} SSH logins in the last hour on {{ $labels.instance }}"
+
+  - alert: SuspiciousNetworkActivity
+    expr: rate(node_network_receive_drop_total[5m]) > 10
+    for: 2m
+    labels:
+      severity: warning
+      service: security
+    annotations:
+      summary: "Network packet drops detected"
+      description: "Network packet drops detected on {{ $labels.instance }}:{{ $labels.device }}"

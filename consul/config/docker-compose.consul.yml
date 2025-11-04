@@ -1,0 +1,181 @@
+version: '3.8'
+
+networks:
+  ish-chat-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  consul_data_1:
+    driver: local
+  consul_data_2:
+    driver: local
+  consul_data_3:
+    driver: local
+
+services:
+  # Consul Server 1 (Bootstrap)
+  consul-server-1:
+    image: consul:1.17.1
+    container_name: consul-server-1
+    restart: unless-stopped
+    hostname: consul-server-1
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.20.0.11
+    ports:
+      - "8501:8500"   # HTTP UI/API
+      - "8601:8600"   # DNS
+      - "8301:8300"   # Server RPC
+      - "8302:8301"   # Serf LAN
+      - "8303:8302"   # Serf WAN
+      - "8502:8502"   # gRPC
+    volumes:
+      - consul_data_1:/consul/data
+      - ./config/consul-server-1.hcl:/consul/config/consul.hcl
+      - ./config/server-acl-tokens.hcl:/consul/config/acl-tokens.hcl
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+      - CONSUL_CLIENT_INTERFACE=eth0
+      - CONSUL_RETRY_JOIN_WAN=
+      - CONSUL_RETRY_JOIN=consul-server-2,consul-server-3
+    command: >
+      sh -c "consul members || consul agent -config-dir=/consul/config -bootstrap-expect=3"
+    healthcheck:
+      test: ["CMD", "consul", "operator", "raft", "list-peers"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "consul.server=true"
+      - "consul.bootstrap=true"
+
+  # Consul Server 2
+  consul-server-2:
+    image: consul:1.17.1
+    container_name: consul-server-2
+    restart: unless-stopped
+    hostname: consul-server-2
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.20.0.12
+    ports:
+      - "8511:8500"   # HTTP UI/API
+      - "8611:8600"   # DNS
+      - "8311:8300"   # Server RPC
+      - "8312:8301"   # Serf LAN
+      - "8313:8302"   # Serf WAN
+      - "8512:8502"   # gRPC
+    volumes:
+      - consul_data_2:/consul/data
+      - ./config/consul-server-2.hcl:/consul/config/consul.hcl
+      - ./config/server-acl-tokens.hcl:/consul/config/acl-tokens.hcl
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+      - CONSUL_CLIENT_INTERFACE=eth0
+      - CONSUL_RETRY_JOIN=consul-server-1,consul-server-3
+    command: >
+      sh -c "sleep 5 && consul agent -config-dir=/consul/config"
+    healthcheck:
+      test: ["CMD", "consul", "operator", "raft", "list-peers"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "consul.server=true"
+
+  # Consul Server 3
+  consul-server-3:
+    image: consul:1.17.1
+    container_name: consul-server-3
+    restart: unless-stopped
+    hostname: consul-server-3
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.20.0.13
+    ports:
+      - "8521:8500"   # HTTP UI/API
+      - "8621:8600"   # DNS
+      - "8321:8300"   # Server RPC
+      - "8322:8301"   # Serf LAN
+      - "8323:8302"   # Serf WAN
+      - "8522:8502"   # gRPC
+    volumes:
+      - consul_data_3:/consul/data
+      - ./config/consul-server-3.hcl:/consul/config/consul.hcl
+      - ./config/server-acl-tokens.hcl:/consul/config/acl-tokens.hcl
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+      - CONSUL_CLIENT_INTERFACE=eth0
+      - CONSUL_RETRY_JOIN=consul-server-1,consul-server-2
+    command: >
+      sh -c "sleep 10 && consul agent -config-dir=/consul/config"
+    healthcheck:
+      test: ["CMD", "consul", "operator", "raft", "list-peers"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "consul.server=true"
+
+  # Consul Client (for local services)
+  consul-client-1:
+    image: consul:1.17.1
+    container_name: consul-client-1
+    restart: unless-stopped
+    hostname: consul-client-1
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.20.0.21
+    ports:
+      - "8531:8500"   # HTTP UI/API
+      - "8631:8600"   # DNS
+      - "8332:8502"   # gRPC
+    volumes:
+      - ./config/consul-client-1.hcl:/consul/config/consul.hcl
+      - ./config/client-acl-tokens.hcl:/consul/config/acl-tokens.hcl
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+      - CONSUL_CLIENT_INTERFACE=eth0
+      - CONSUL_RETRY_JOIN=consul-server-1,consul-server-2,consul-server-3
+    command: >
+      sh -c "sleep 15 && consul agent -config-dir=/consul/config"
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "consul.client=true"
+
+  # Consul UI Load Balancer (Nginx)
+  consul-ui-lb:
+    image: nginx:1.25-alpine
+    container_name: consul-ui-lb
+    restart: unless-stopped
+    hostname: consul-ui-lb
+    networks:
+      ish-chat-network:
+        ipv4_address: 172.20.0.30
+    ports:
+      - "8500:80"     # Consul UI
+      - "8600:53/udp" # DNS
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - consul-server-1
+      - consul-server-2
+      - consul-server-3
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "consul.ui=true"

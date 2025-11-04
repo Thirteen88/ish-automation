@@ -1,0 +1,190 @@
+# Alert rules for ISH Chat monitoring
+groups:
+  - name: ish-chat.rules
+    rules:
+      # Application health alerts
+      - alert: ISHChatAppDown
+        expr: up{job=~"ish-chat-app.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ISH Chat application is down"
+          description: "ISH Chat application {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second on {{ $labels.instance }}."
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }} seconds on {{ $labels.instance }}."
+
+      # AI Provider alerts
+      - alert: AIProviderDown
+        expr: up{job=~".*-provider"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AI provider is down"
+          description: "AI provider {{ $labels.job }} has been down for more than 2 minutes."
+
+      - alert: HighAILatency
+        expr: ai_request_duration_seconds{quantile="0.95"} > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High AI latency detected"
+          description: "95th percentile AI response time is {{ $value }} seconds for {{ $labels.provider }}."
+
+      - alert: AIRequestFailureRate
+        expr: rate(ai_requests_failed_total[5m]) / rate(ai_requests_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High AI request failure rate"
+          description: "AI request failure rate is {{ $value | humanizePercentage }} for {{ $labels.provider }}."
+
+      # Database alerts
+      - alert: PostgreSQLDown
+        expr: up{job="postgres-primary"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL primary is down"
+          description: "PostgreSQL primary database has been down for more than 1 minute."
+
+      - alert: PostgreSQLHighConnections
+        expr: pg_stat_activity_count > 150
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of PostgreSQL connections"
+          description: "PostgreSQL has {{ $value }} active connections."
+
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_statements_mean_time_seconds[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow PostgreSQL queries detected"
+          description: "Average query time is {{ $value }} seconds."
+
+      # Redis alerts
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache has been down for more than 1 minute."
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage is {{ $value | humanizePercentage }}."
+
+      - alert: RedisHighConnectionCount
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Redis connection count"
+          description: "Redis has {{ $value }} connected clients."
+
+      # System resource alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }} {{ $labels.mountpoint }}."
+
+      # Nginx alerts
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nginx load balancer is down"
+          description: "Nginx load balancer has been down for more than 1 minute."
+
+      - alert: HighNginxConnections
+        expr: nginx_connections_active > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Nginx connection count"
+          description: "Nginx has {{ $value }} active connections."
+
+      # Business metrics alerts
+      - alert: LowActiveUsers
+        expr: active_users_total < 10
+        for: 15m
+        labels:
+          severity: info
+        annotations:
+          summary: "Low number of active users"
+          description: "Only {{ $value }} active users in the last 15 minutes."
+
+      - alert: HighChatSessionCreationRate
+        expr: rate(chat_sessions_created_total[5m]) > 10
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "High chat session creation rate"
+          description: "Chat session creation rate is {{ $value }} sessions per second."
+
+      - alert: AIQuotaExhausted
+        expr: ai_tokens_remaining_total < 1000
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI quota nearly exhausted"
+          description: "Only {{ $value }} tokens remaining for {{ $labels.provider }}."

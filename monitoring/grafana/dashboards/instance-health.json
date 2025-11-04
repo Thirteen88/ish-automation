@@ -1,0 +1,414 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Instance Health & Availability Dashboard",
+    "tags": ["ish-chat", "instances", "health", "availability"],
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": {
+      "from": "now-3h",
+      "to": "now"
+    },
+    "variables": {
+      "provider_type": {
+        "type": "query",
+        "query": "label_values(instance_manager_instances_total, provider_type)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": false
+      }
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Overall System Health",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(instance_manager_instances_healthy{provider_type=~\"$provider_type\"}) / sum(instance_manager_instances_total{provider_type=~\"$provider_type\", status!=\"total\"}) * 100",
+            "legendFormat": "Healthy Percentage"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 70
+                },
+                {
+                  "color": "green",
+                  "value": 90
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Total Active Instances",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(instance_manager_instances_healthy{provider_type=~\"$provider_type\"})",
+            "legendFormat": "Healthy Instances"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 2
+                },
+                {
+                  "color": "green",
+                  "value": 5
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Current Unhealthy Instances",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(instance_manager_instances_total{provider_type=~\"$provider_type\", status=\"unhealthy\"})",
+            "legendFormat": "Unhealthy"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 1
+                },
+                {
+                  "color": "red",
+                  "value": 3
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "Health Check Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_health_checks_total{provider_type=~\"$provider_type\", status=\"healthy\"}[1m])) / sum(rate(instance_manager_health_checks_total{provider_type=~\"$provider_type\"}[1m])) * 100",
+            "legendFormat": "Success Rate"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 85
+                },
+                {
+                  "color": "green",
+                  "value": 95
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        }
+      },
+      {
+        "id": 5,
+        "title": "Instance Count by Status",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(instance_manager_instances_total{provider_type=~\"$provider_type\"}) by (status)",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 6,
+        "title": "Instance Count by Provider",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(instance_manager_instances_total{provider_type=~\"$provider_type\"}) by (provider_type)",
+            "legendFormat": "{{provider_type}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 7,
+        "title": "Health Score Trend",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "avg(instance_manager_health_score{provider_type=~\"$provider_type\"}) by (provider_type)",
+            "legendFormat": "Average Health - {{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Health Score",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 8,
+        "title": "Health Check Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(instance_manager_health_check_duration_seconds_bucket{provider_type=~\"$provider_type\"}[1m])) by (le, check_type))",
+            "legendFormat": "95th percentile - {{check_type}}"
+          },
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(instance_manager_health_check_duration_seconds_bucket{provider_type=~\"$provider_type\"}[1m])) by (le, check_type))",
+            "legendFormat": "50th percentile - {{check_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Duration (seconds)"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 9,
+        "title": "Health Check Failures",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_health_checks_total{provider_type=~\"$provider_type\", status=\"unhealthy\"}[1m])) by (check_type)",
+            "legendFormat": "{{check_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Failures per minute"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        }
+      },
+      {
+        "id": 10,
+        "title": "Instance Load Distribution",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "instance_manager_instance_load{provider_type=~\"$provider_type\"}",
+            "legendFormat": "{{instance_id}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 32
+        }
+      },
+      {
+        "id": 11,
+        "title": "Instance Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "instance_manager_instance_response_time_seconds{provider_type=~\"$provider_type\"}",
+            "legendFormat": "{{instance_id}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time (seconds)"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 40
+        }
+      },
+      {
+        "id": 12,
+        "title": "Instance Success Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "instance_manager_instance_success_rate{provider_type=~\"$provider_type\"}",
+            "legendFormat": "{{instance_id}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Success Rate",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 40
+        }
+      },
+      {
+        "id": 13,
+        "title": "Auto-scaling Events",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_scaling_events_total{provider_type=~\"$provider_type\"}[1m])) by (direction, reason)",
+            "legendFormat": "{{direction}} - {{reason}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Scaling events per minute"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 48
+        }
+      },
+      {
+        "id": 14,
+        "title": "Current vs Desired Instance Count",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(instance_manager_instances_current{provider_type=~\"$provider_type\"}) by (provider_type)",
+            "legendFormat": "Current - {{provider_type}}"
+          },
+          {
+            "expr": "sum(instance_manager_instances_desired{provider_type=~\"$provider_type\"}) by (provider_type)",
+            "legendFormat": "Desired - {{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Instance Count"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 56
+        }
+      },
+      {
+        "id": 15,
+        "title": "Circuit Breaker Status",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "instance_manager_circuit_breaker_state{provider_type=~\"$provider_type\"}",
+            "legendFormat": "{{instance_id}}",
+            "format": "table"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 56
+        }
+      }
+    ],
+    "time": {
+      "from": "now-3h",
+      "to": "now"
+    },
+    "refresh": "15s"
+  }
+}

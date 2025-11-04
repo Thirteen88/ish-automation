@@ -1,0 +1,333 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "AI Provider Performance Dashboard",
+    "tags": ["ish-chat", "ai-providers", "performance"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "variables": {
+      "provider_type": {
+        "type": "query",
+        "query": "label_values(instance_manager_requests_total, provider_type)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true
+      },
+      "model_name": {
+        "type": "query",
+        "query": "label_values(instance_manager_requests_total{provider_type=~\"$provider_type\"}, model_name)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true
+      }
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Provider Overview",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_requests_total{provider_type=~\"$provider_type\"}[1m]))",
+            "legendFormat": "Total RPS"
+          },
+          {
+            "expr": "sum(rate(instance_manager_requests_total{provider_type=~\"$provider_type\", status=\"error\"}[1m])) / sum(rate(instance_manager_requests_total{provider_type=~\"$provider_type\"}[1m])) * 100",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 5
+                },
+                {
+                  "color": "red",
+                  "value": 10
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Response Time (95th percentile)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(instance_manager_request_duration_seconds_bucket{provider_type=~\"$provider_type\"}[1m])) by (le))",
+            "legendFormat": "95th percentile"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 2
+                },
+                {
+                  "color": "red",
+                  "value": 5
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Request Rate by Provider",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_requests_total{provider_type=~\"$provider_type\"}[1m])) by (provider_type)",
+            "legendFormat": "{{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Requests per second"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Error Rate by Provider",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_requests_total{provider_type=~\"$provider_type\", status=\"error\"}[1m])) by (provider_type) / sum(rate(instance_manager_requests_total{provider_type=~\"$provider_type\"}[1m])) by (provider_type) * 100",
+            "legendFormat": "{{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Error Rate (%)",
+            "max": 100,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Response Time Percentiles",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(instance_manager_request_duration_seconds_bucket{provider_type=~\"$provider_type\"}[1m])) by (le, provider_type))",
+            "legendFormat": "50th - {{provider_type}}"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(instance_manager_request_duration_seconds_bucket{provider_type=~\"$provider_type\"}[1m])) by (le, provider_type))",
+            "legendFormat": "95th - {{provider_type}}"
+          },
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(instance_manager_request_duration_seconds_bucket{provider_type=~\"$provider_type\"}[1m])) by (le, provider_type))",
+            "legendFormat": "99th - {{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time (seconds)"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 6,
+        "title": "Instance Load Distribution",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "instance_manager_instance_load{provider_type=~\"$provider_type\"}",
+            "legendFormat": "{{instance_id}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 7,
+        "title": "Instance Success Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "instance_manager_instance_success_rate{provider_type=~\"$provider_type\"}",
+            "legendFormat": "{{instance_id}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Success Rate",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        }
+      },
+      {
+        "id": 8,
+        "title": "Token Usage by Provider",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_tokens_used_total{provider_type=~\"$provider_type\"}[1m])) by (provider_type)",
+            "legendFormat": "{{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Tokens per minute"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 32
+        }
+      },
+      {
+        "id": 9,
+        "title": "Cost per Request",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_cost_estimate_dollars{provider_type=~\"$provider_type\"}[1m])) by (provider_type) / sum(rate(instance_manager_requests_total{provider_type=~\"$provider_type\"}[1m])) by (provider_type)",
+            "legendFormat": "{{provider_type}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Cost per request ($)"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 32
+        }
+      },
+      {
+        "id": 10,
+        "title": "Circuit Breaker Status",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "instance_manager_circuit_breaker_state{provider_type=~\"$provider_type\"}",
+            "legendFormat": "{{instance_id}}",
+            "format": "table"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 40
+        }
+      },
+      {
+        "id": 11,
+        "title": "Health Score Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "instance_manager_health_score{provider_type=~\"$provider_type\"}",
+            "legendFormat": "{{instance_id}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 48
+        }
+      },
+      {
+        "id": 12,
+        "title": "Failover Events",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(instance_manager_load_balancer_failovers_total{provider_type=~\"$provider_type\"}[1m])) by (provider_type, reason)",
+            "legendFormat": "{{provider_type}} - {{reason}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Failovers per minute"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 48
+        }
+      }
+    ],
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}
